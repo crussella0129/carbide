@@ -280,4 +280,4 @@
 - **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
 - **Completed:** 2026-11-26T18:33:30Z
 - **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/dialogs.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/state_io.rs
-- **Commit:** PENDING
+- **Commit:** `975a893fab042404d5020b2aabb3f47d236dc8b9`
