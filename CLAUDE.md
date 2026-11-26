@@ -45,7 +45,7 @@ cargo build --workspace
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 cargo clippy -p carbide-formula --features native --all-targets -- -D warnings
-cargo run --bin carbide-cli
+cargo run -p carbide-cli
 
 # Pure-Rust UI (native + wasm32)
 cargo run --manifest-path apps/carbide-ui/Cargo.toml
