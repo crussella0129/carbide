@@ -258,3 +258,10 @@
 - **Completed:** 2026-11-26T17:59:00Z
 - **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/app/dialogs.rs
 - **Commit:** `fdf4aa920118def3674ec4ac2076c24e669ac896`
+
+## T-004 (sprint 13)
+- **Description:** Extract cell accessors/formatting/navigation (`cells.rs`, 613 lines), keyboard/ribbon commands (`commands.rs`, 660 lines), and editing/clipboard/undo/resize (`edit.rs`, 688 lines) from `app/mod.rs` (now 666 lines), removing all glob imports from `mod.rs` so every file under `apps/carbide-ui/src/app/` is under 1,000 lines (max 839 lines).
+- **Intent:** [INT-0002](../intents/INT-0002-modularize-carbide-ui-app.md)
+- **Completed:** 2026-11-26T18:02:00Z
+- **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/edit.rs
+- **Commit:** PENDING
