@@ -17,7 +17,7 @@ use crate::widget;
 use super::helpers::{
     hex_address, hex_autosum, hex_current_region, hex_in_view, triangle_address, triangle_autosum,
 };
-use super::types::{Action, ActiveSheet, CellId, FormatEdit, HexFormatEdit};
+use super::types::{Action, ActiveSheet, CellId, FormatEdit};
 use super::{CarbideApp, COLS, EDIT_KEYS, HEX_VIEW_RADIUS, NAV_KEYS, ROWS, TRIANGLE_RADIUS};
 
 impl CarbideApp {
@@ -614,7 +614,7 @@ impl CarbideApp {
             }
             self.square.formats.update(cell, |f| *f = after.clone());
             edits.push(FormatEdit {
-                cell,
+                cell: CellId::Square(cell),
                 before,
                 after,
             });
@@ -645,14 +645,14 @@ impl CarbideApp {
                 continue;
             }
             self.hex.formats.update(cell, |f| *f = after.clone());
-            edits.push(HexFormatEdit {
-                cell,
+            edits.push(FormatEdit {
+                cell: CellId::Hex(cell),
                 before,
                 after,
             });
         }
         if !edits.is_empty() {
-            self.history.record(Action::HexFormats(edits));
+            self.history.record(Action::Formats(edits));
         }
     }
 }

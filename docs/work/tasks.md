@@ -1,11 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-### T-001: Unify four-lattice formatting/history and wire Voronoi formatting + persistence
-- **Status:** pending
-- **Sprint:** 14
-- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
-- **Build plan:** [s14 build-plan.md](../sprints/s14/sprint-plans/build-plan.md#t-001-unify-four-lattice-formattinghistory-and-wire-voronoi-formatting--persistence)
-
 ### T-002: Add Voronoi notes, multi-lattice `OpenNote`, hover tooltips, context menu, and persistence
 - **Status:** pending
 - **Sprint:** 14

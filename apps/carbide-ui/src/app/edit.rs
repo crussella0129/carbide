@@ -366,16 +366,7 @@ impl CarbideApp {
             }
             Action::Formats(edits) => {
                 for edit in &edits {
-                    self.square
-                        .formats
-                        .update(edit.cell, |f| *f = edit.before.clone());
-                }
-            }
-            Action::HexFormats(edits) => {
-                for edit in &edits {
-                    self.hex
-                        .formats
-                        .update(edit.cell, |f| *f = edit.before.clone());
+                    self.set_cell_format(edit.cell, edit.before.clone());
                 }
             }
         }
@@ -396,16 +387,7 @@ impl CarbideApp {
             }
             Action::Formats(edits) => {
                 for edit in &edits {
-                    self.square
-                        .formats
-                        .update(edit.cell, |f| *f = edit.after.clone());
-                }
-            }
-            Action::HexFormats(edits) => {
-                for edit in &edits {
-                    self.hex
-                        .formats
-                        .update(edit.cell, |f| *f = edit.after.clone());
+                    self.set_cell_format(edit.cell, edit.after.clone());
                 }
             }
         }

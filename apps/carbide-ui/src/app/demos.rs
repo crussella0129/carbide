@@ -205,8 +205,6 @@ impl CarbideApp {
             frame_time: 0.0,
             last_format_time: 0.0,
             last_format_cells: Vec::new(),
-            last_hex_format_time: 0.0,
-            last_hex_format_cells: Vec::new(),
             cond_rules: vec![Rule {
                 condition: Condition::GreaterThan(1000.0),
                 format: CellFormat {

@@ -265,3 +265,11 @@
 - **Completed:** 2026-11-26T18:02:00Z
 - **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/edit.rs
 - **Commit:** `ff1d4be1a4191d6e7d192d96c76922d31e8de0a7`
+
+
+## T-001 (sprint 14)
+- **Description:** Unify four-lattice formatting (`FormatEdit { cell: CellId }`, `Action::Formats`, `merge_format_edits`, `format_range`, `toggle_range`), wire Voronoi ribbon/LayoutJob text/fill rendering and marquee `Selection.extra` formatting + status-bar deduplicated count, and persist `voronoi_formats` in `UiSnapshot` with strict v2 backward-compat tests.
+- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
+- **Completed:** 2026-11-26T18:31:30Z
+- **Files modified:** apps/carbide-ui/src/app/types.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/edit.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/state_io.rs, apps/carbide-ui/src/app/tests.rs
+- **Commit:** PENDING

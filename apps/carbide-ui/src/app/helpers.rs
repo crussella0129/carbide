@@ -11,7 +11,7 @@ use crate::format::{self, Borders, CellFormat, HAlign};
 use crate::grid;
 use crate::keymap::Dir;
 
-use super::types::{FormatEdit, HexFormatEdit};
+use super::types::FormatEdit;
 use super::{COLS, HEX_VIEW_RADIUS, ROWS, TRIANGLE_RADIUS};
 
 /// Draw a square cell's value with its formatting — colour, alignment,
@@ -471,7 +471,7 @@ pub(super) fn toggle_target(mut currently_on: impl Iterator<Item = bool>) -> boo
 
 /// Merge two consecutive format-edit batches over the same cells into
 /// one — the earliest `before` and the latest `after` per cell, so a
-/// coalesced gesture undoes to its true starting state.
+/// coalesced gesture undoes to its true starting state across any lattice.
 pub(super) fn merge_format_edits(prev: Vec<FormatEdit>, new: Vec<FormatEdit>) -> Vec<FormatEdit> {
     new.into_iter()
         .map(|n| {
@@ -481,29 +481,6 @@ pub(super) fn merge_format_edits(prev: Vec<FormatEdit>, new: Vec<FormatEdit>) ->
                 .map(|p| p.before.clone())
                 .unwrap_or_else(|| n.before.clone());
             FormatEdit {
-                cell: n.cell,
-                before,
-                after: n.after,
-            }
-        })
-        .collect()
-}
-
-/// Merge two consecutive hex format-edit batches over the same cells —
-/// earliest `before`, latest `after` per cell. The hex twin of
-/// [`merge_format_edits`].
-pub(super) fn merge_hex_format_edits(
-    prev: Vec<HexFormatEdit>,
-    new: Vec<HexFormatEdit>,
-) -> Vec<HexFormatEdit> {
-    new.into_iter()
-        .map(|n| {
-            let before = prev
-                .iter()
-                .find(|p| p.cell == n.cell)
-                .map(|p| p.before.clone())
-                .unwrap_or_else(|| n.before.clone());
-            HexFormatEdit {
                 cell: n.cell,
                 before,
                 after: n.after,

@@ -11,11 +11,10 @@ use crate::grid;
 use crate::keymap::{Dir, Mode};
 
 use super::helpers::{
-    format_number, hex_address, hex_in_view, hex_jump, hex_step, merge_format_edits,
-    merge_hex_format_edits, natural_text, step_square, toggle_target, triangle_address,
-    triangle_in_view, triangle_step,
+    format_number, hex_address, hex_in_view, hex_jump, hex_step, merge_format_edits, natural_text,
+    step_square, toggle_target, triangle_address, triangle_in_view, triangle_step,
 };
-use super::types::{Action, ActiveSheet, FormatEdit, HexFormatEdit};
+use super::types::{Action, ActiveSheet, CellId, FormatEdit};
 use super::voronoi_helpers::{voronoi_address, voronoi_advance_step};
 use super::{CarbideApp, COALESCE_WINDOW, COLS, PAGE_ROWS, ROWS, TRIANGLE_RADIUS};
 
@@ -127,12 +126,45 @@ impl CarbideApp {
             .unwrap_or_default()
     }
 
-    /// The display text for a Voronoi-sheet cell.
+    /// The display text for a Voronoi-sheet cell, rendered under the
+    /// cell's number format.
     pub(super) fn voronoi_cell_text(&self, coord: VoronoiCoord) -> String {
+        let Some(snapshot) = self
+            .engine
+            .get_cell(self.voronoi.sheet_id, &voronoi_address(coord))
+        else {
+            return String::new();
+        };
+        let number = self.voronoi.formats.get(coord).number;
+        match snapshot.value {
+            CellValue::Number(n) => {
+                format::render_number(n, number).unwrap_or_else(|| format_number(n))
+            }
+            CellValue::Integer(i) => {
+                format::render_number(i as f64, number).unwrap_or_else(|| i.to_string())
+            }
+            other => natural_text(other),
+        }
+    }
+
+    /// The raw evaluated value of a Voronoi-sheet cell, used by
+    /// conditional formatting, negative-red rendering, and error tooltips.
+    pub(super) fn voronoi_cell_value(&self, coord: VoronoiCoord) -> CellValue {
         self.engine
             .get_cell(self.voronoi.sheet_id, &voronoi_address(coord))
-            .map(|snapshot| natural_text(snapshot.value))
+            .map(|snapshot| snapshot.value)
             .unwrap_or_default()
+    }
+
+    /// The effective cell format for a Voronoi-sheet cell — base format
+    /// layered with the first matching conditional-formatting rule.
+    pub(super) fn voronoi_effective_format(&self, coord: VoronoiCoord) -> CellFormat {
+        let base = self.voronoi.formats.get(coord);
+        if self.cond_rules.is_empty() {
+            base
+        } else {
+            conditional::effective_format(&base, &self.voronoi_cell_value(coord), &self.cond_rules)
+        }
     }
 
     /// The triangle-sheet cell value used by conditional formatting.
@@ -285,40 +317,77 @@ impl CarbideApp {
         }
     }
 
-    /// Apply a formatting change to every cell of the active sheet's
-    /// selection, recorded as one undo step. Cells the change leaves
-    /// untouched are dropped.
-    pub(super) fn format_range(&mut self, edit: impl Fn(&mut CellFormat)) {
+    /// Every cell in the active sheet's selection as [`CellId`]s —
+    /// rectangular `primary_cells()` on Square/Hex/Triangle, and full
+    /// marquee-aware `cells()` (anchor + `Selection.extra`) on Voronoi.
+    pub(super) fn active_selection_cells(&self) -> Vec<CellId> {
         match self.active {
-            ActiveSheet::Square => self.format_square_range(edit),
-            ActiveSheet::Hex => self.format_hex_range(edit),
-            ActiveSheet::Triangle => {
-                // Triangle format coalescing lands in a follow-up;
-                // apply the edit directly without the same-cell drag
-                // merge logic so the basic flow still works.
-                let cells = self.triangle.selection.primary_cells();
-                for cell in cells {
-                    self.triangle.formats.update(cell, |f| edit(f));
-                }
-            }
-            ActiveSheet::Voronoi => {}
+            ActiveSheet::Square => self
+                .square
+                .selection
+                .primary_cells()
+                .into_iter()
+                .map(CellId::Square)
+                .collect(),
+            ActiveSheet::Hex => self
+                .hex
+                .selection
+                .primary_cells()
+                .into_iter()
+                .map(CellId::Hex)
+                .collect(),
+            ActiveSheet::Triangle => self
+                .triangle
+                .selection
+                .primary_cells()
+                .into_iter()
+                .map(CellId::Triangle)
+                .collect(),
+            ActiveSheet::Voronoi => self
+                .voronoi
+                .selection
+                .cells()
+                .into_iter()
+                .map(CellId::Voronoi)
+                .collect(),
         }
     }
 
-    /// The square-sheet format apply, with edit-coalescing — a rapid run
-    /// of same-cell format edits (a colour-picker drag) collapses into
-    /// one undo step.
-    fn format_square_range(&mut self, edit: impl Fn(&mut CellFormat)) {
-        let cells = self.square.selection.primary_cells();
+    /// Read the stored format for any cell across all four lattices.
+    pub(super) fn cell_format(&self, id: CellId) -> CellFormat {
+        match id {
+            CellId::Square(c) => self.square.formats.get(c),
+            CellId::Hex(c) => self.hex.formats.get(c),
+            CellId::Triangle(c) => self.triangle.formats.get(c),
+            CellId::Voronoi(c) => self.voronoi.formats.get(c),
+        }
+    }
+
+    /// Overwrite the stored format for any cell across all four lattices.
+    pub(super) fn set_cell_format(&mut self, id: CellId, fmt: CellFormat) {
+        match id {
+            CellId::Square(c) => self.square.formats.update(c, |f| *f = fmt.clone()),
+            CellId::Hex(c) => self.hex.formats.update(c, |f| *f = fmt.clone()),
+            CellId::Triangle(c) => self.triangle.formats.update(c, |f| *f = fmt.clone()),
+            CellId::Voronoi(c) => self.voronoi.formats.update(c, |f| *f = fmt.clone()),
+        }
+    }
+
+    /// Apply a formatting change to every cell of the active sheet's
+    /// selection (including Voronoi marquee `Selection.extra` cells),
+    /// recorded as one undo step with drag coalescing across all four
+    /// lattices. Cells the change leaves untouched are dropped.
+    pub(super) fn format_range(&mut self, edit: impl Fn(&mut CellFormat)) {
+        let cells = self.active_selection_cells();
         let mut edits = Vec::new();
         for cell in cells {
-            let before = self.square.formats.get(cell);
+            let before = self.cell_format(cell);
             let mut after = before.clone();
             edit(&mut after);
             if before == after {
                 continue;
             }
-            self.square.formats.update(cell, |f| *f = after.clone());
+            self.set_cell_format(cell, after.clone());
             edits.push(FormatEdit {
                 cell,
                 before,
@@ -328,7 +397,7 @@ impl CarbideApp {
         if edits.is_empty() {
             return;
         }
-        let touched: Vec<(u32, u32)> = edits.iter().map(|e| e.cell).collect();
+        let touched: Vec<CellId> = edits.iter().map(|e| e.cell).collect();
         // Coalesce with the previous format action when it touched the
         // same cells within COALESCE_WINDOW — a colour-picker drag fires
         // a change every frame, and the whole drag should undo at once.
@@ -353,76 +422,17 @@ impl CarbideApp {
         self.last_format_cells = touched;
     }
 
-    /// The hex-sheet format apply, recorded as one undo step. A rapid
-    /// run of same-cell edits (a colour drag) coalesces into one step.
-    fn format_hex_range(&mut self, edit: impl Fn(&mut CellFormat)) {
-        let mut edits = Vec::new();
-        for cell in self.hex.selection.primary_cells() {
-            let before = self.hex.formats.get(cell);
-            let mut after = before.clone();
-            edit(&mut after);
-            if before == after {
-                continue;
-            }
-            self.hex.formats.update(cell, |f| *f = after.clone());
-            edits.push(HexFormatEdit {
-                cell,
-                before,
-                after,
-            });
-        }
-        if edits.is_empty() {
-            return;
-        }
-        let touched: Vec<HexCoord> = edits.iter().map(|e| e.cell).collect();
-        // Coalesce a rapid run of same-cell hex format edits (a colour
-        // drag) into one undo step, mirroring the square sheet.
-        let recent = self.frame_time - self.last_hex_format_time < COALESCE_WINDOW;
-        if recent && self.last_hex_format_cells == touched {
-            match self.history.pop_undo() {
-                Some(Action::HexFormats(prev)) => {
-                    let merged = merge_hex_format_edits(prev, edits);
-                    self.history.record(Action::HexFormats(merged));
-                }
-                Some(other) => {
-                    // The top wasn't a hex format action — restore it.
-                    self.history.record(other);
-                    self.history.record(Action::HexFormats(edits));
-                }
-                None => self.history.record(Action::HexFormats(edits)),
-            }
-        } else {
-            self.history.record(Action::HexFormats(edits));
-        }
-        self.last_hex_format_time = self.frame_time;
-        self.last_hex_format_cells = touched;
-    }
-
     /// Toggle a boolean format flag across the selection — Excel's rule:
     /// if every cell already has the flag, clear it for all; otherwise
-    /// set it for all. Works on whichever sheet is active.
+    /// set it for all. Works on whichever sheet is active (including
+    /// Voronoi marquee selections).
     pub(super) fn toggle_range(
         &mut self,
         get: impl Fn(&CellFormat) -> bool,
         set: impl Fn(&mut CellFormat, bool),
     ) {
-        let target = match self.active {
-            ActiveSheet::Square => {
-                let cells = self.square.selection.primary_cells();
-                toggle_target(cells.iter().map(|&c| get(&self.square.formats.get(c))))
-            }
-            ActiveSheet::Hex => {
-                let cells = self.hex.selection.primary_cells();
-                toggle_target(cells.iter().map(|&c| get(&self.hex.formats.get(c))))
-            }
-            ActiveSheet::Triangle => {
-                let cells = self.triangle.selection.primary_cells();
-                toggle_target(cells.iter().map(|&c| get(&self.triangle.formats.get(c))))
-            }
-            // Voronoi sheet has no format pipeline in v150 — leave the
-            // existing toggle target unchanged (defaults to false).
-            ActiveSheet::Voronoi => false,
-        };
+        let cells = self.active_selection_cells();
+        let target = toggle_target(cells.iter().map(|&c| get(&self.cell_format(c))));
         self.format_range(|f| set(f, target));
     }
 

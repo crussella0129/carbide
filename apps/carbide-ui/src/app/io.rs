@@ -223,6 +223,8 @@ impl CarbideApp {
         hex_formats.replace_with(self.hex.formats.iter().map(|(k, v)| (*k, v.clone())));
         let mut tri_formats = FormatMap::new();
         tri_formats.replace_with(self.triangle.formats.iter().map(|(k, v)| (*k, v.clone())));
+        let mut vor_formats = FormatMap::new();
+        vor_formats.replace_with(self.voronoi.formats.iter().map(|(k, v)| (*k, v.clone())));
 
         let mut sq_widgets: widget::Widgets<(u32, u32)> = widget::Widgets::default();
         sq_widgets.replace_with(self.square_widgets.iter().map(|(k, v)| (*k, *v)));
@@ -240,6 +242,7 @@ impl CarbideApp {
             square_formats: sq_formats,
             hex_formats,
             triangle_formats: tri_formats,
+            voronoi_formats: vor_formats,
             square_widgets: sq_widgets,
             hex_widgets,
             triangle_widgets: tri_widgets,
@@ -290,6 +293,9 @@ impl CarbideApp {
         self.triangle
             .formats
             .replace_with(s.triangle_formats.iter().map(|(k, v)| (*k, v.clone())));
+        self.voronoi
+            .formats
+            .replace_with(s.voronoi_formats.iter().map(|(k, v)| (*k, v.clone())));
         self.square_widgets
             .replace_with(s.square_widgets.iter().map(|(k, v)| (*k, *v)));
         self.hex_widgets

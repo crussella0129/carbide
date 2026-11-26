@@ -5,9 +5,11 @@ use carbide_tess::voronoi::VoronoiCoord;
 use carbide_tess::{Lattice, Point2};
 use eframe::egui;
 
+use crate::format;
 use crate::formula_mode;
 use crate::widget;
 
+use super::helpers::draw_text_decorations;
 use super::types::EditState;
 use super::voronoi_helpers::{
     apply_seed_drag, cells_in_screen_rect, fade_alpha, pop_out_widget_center, seed_handle_alphas,
@@ -162,11 +164,14 @@ impl CarbideApp {
                 .iter()
                 .map(|v| egui::pos2(origin.x + v.x, origin.y + v.y))
                 .collect();
-            let fill = palette[(i as usize) % palette.len()];
+            let fmt = self.voronoi_effective_format(coord);
+            let fill = fmt.fill.unwrap_or(palette[(i as usize) % palette.len()]);
             painter.add(egui::Shape::convex_polygon(pts, fill, stroke));
         }
 
-        // Second pass — cell value text at each centroid. Widget cells
+        // Second pass — cell value text at each centroid, formatted with
+        // LayoutJob so italics, faux-bold, font size, colour, negative-red,
+        // and underline/strikethrough all render faithfully. Widget cells
         // are skipped: the Button/Toggle paints over the centroid, and
         // showing the value behind it bleeds the source through.
         let fg = ui.visuals().text_color();
@@ -181,12 +186,37 @@ impl CarbideApp {
             if text.is_empty() {
                 continue;
             }
-            painter.text(
-                pos,
-                egui::Align2::CENTER_CENTER,
-                text,
-                egui::FontId::proportional(14.0),
-                fg,
+            let fmt = self.voronoi_effective_format(coord);
+            let value = self.voronoi_cell_value(coord);
+            let is_negative = match value {
+                CellValue::Number(n) => n < 0.0,
+                CellValue::Integer(n) => n < 0,
+                _ => false,
+            };
+            let color = format::effective_text_color(&fmt, is_negative, fg);
+            let mut job = egui::text::LayoutJob::default();
+            job.append(
+                &text,
+                0.0,
+                egui::TextFormat {
+                    font_id: egui::FontId::proportional(fmt.font_size.points()),
+                    color,
+                    italics: fmt.italic,
+                    ..Default::default()
+                },
+            );
+            let galley = painter.layout_job(job);
+            let size = galley.size();
+            let top_left = egui::pos2(pos.x - size.x / 2.0, pos.y - size.y / 2.0);
+            painter.galley(top_left, galley.clone(), color);
+            if fmt.bold {
+                painter.galley(top_left + egui::vec2(0.55, 0.0), galley, color);
+            }
+            draw_text_decorations(
+                &painter,
+                egui::Rect::from_min_size(top_left, size),
+                &fmt,
+                color,
             );
         }
 

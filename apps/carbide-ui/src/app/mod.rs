@@ -204,14 +204,11 @@ pub struct CarbideApp {
     /// coalesce rapid format edits.
     frame_time: f64,
     /// When the last format action was recorded, and the cells it
-    /// touched. A fresh format edit over the same cells within
-    /// `COALESCE_WINDOW` merges into it — so a colour-picker drag is one
-    /// undo step, not one per frame.
+    /// touched (on any lattice). A fresh format edit over the same cells
+    /// within `COALESCE_WINDOW` merges into it — so a colour-picker drag
+    /// is one undo step, not one per frame.
     last_format_time: f64,
-    last_format_cells: Vec<(u32, u32)>,
-    /// The hex-sheet counterparts, for hex format coalescing.
-    last_hex_format_time: f64,
-    last_hex_format_cells: Vec<HexCoord>,
+    last_format_cells: Vec<CellId>,
     /// Conditional-formatting rules for the square sheet, evaluated each
     /// frame and layered over a cell's manual format.
     cond_rules: Vec<Rule>,
@@ -393,8 +390,8 @@ impl eframe::App for CarbideApp {
                     }
                 }
                 ActiveSheet::Voronoi => {
-                    // T-007: contextual Voronoi ribbon group surfaces only here.
-                    let current = CellFormat::default();
+                    // Contextual Voronoi ribbon group surfaces only here.
+                    let current = self.voronoi.formats.get(self.voronoi.selection.cursor);
                     let can_undo = self.history.can_undo();
                     let can_redo = self.history.can_redo();
                     let frozen = self.engine.voronoi_frozen(self.voronoi.sheet_id);
@@ -477,10 +474,13 @@ impl eframe::App for CarbideApp {
                                 let (q, r) = self.hex.selection.dimensions();
                                 ui.label(egui::RichText::new(format!("{q}q × {r}r")).weak());
                             }
-                            ActiveSheet::Voronoi if !self.voronoi.selection.extra.is_empty() => {
-                                // Marquee dimension hint: extras count + 1 (the cursor).
-                                let n = self.voronoi.selection.extra.len() + 1;
-                                ui.label(egui::RichText::new(format!("{n} cells")).weak());
+                            ActiveSheet::Voronoi => {
+                                // Marquee dimension hint: deduplicated count across
+                                // anchor + extra, shown only when > 1 cell is selected.
+                                let n = self.voronoi.selection.cells().len();
+                                if n > 1 {
+                                    ui.label(egui::RichText::new(format!("{n} cells")).weak());
+                                }
                             }
                             _ => {}
                         }
