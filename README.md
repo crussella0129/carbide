@@ -1,35 +1,42 @@
 # Carbide
 
-(Under Construction)
+A pure-Rust, DAG-evaluated spreadsheet where cells are not stuck being squares and interactive widgets turn workbooks into live models.
 
-A spreadsheet where cells are not stuck being squares and the flow of time itself becomes a tool.
+## Highlights
 
-Carbide is a DAG-evaluated workbook with: 
-
-- **Tessellating Cell Shapes** — squares, hexagons, triangles and Voronoi cells, with unique conditional formatting capabilities in some cases
-- **Switchable formula language per cell**: Excel-style, Python (embedded via PyO3), or Rust (Rhai-preview with an optional rustc-compiled native path)
-- **Programmable Widgets & Real-Time vs. Static Functionality: Build actual mock applications and games from your spreadsheets. Make them usable with 'stage mode' - hides all ribbons and editing tools.
-
-> **Status: Phase 0** — foundation only. Nothing user-visible works yet. See [`PLAN.md`](./PLAN.md) for the architecture and roadmap.
-
-## Why?
-
-Different tilings encode different neighbor relations. Spreadsheets are how non-programmers do computation, but they're locked to a 4-neighbor grid. Hexes are the natural home for board games, cellular automata, and a lot of GIS. Triangles encode barycentric problems cleanly. Parallelograms suit isometric and crystallographic layouts.
-
-The formula-language story is the other half: keep the Excel ergonomic on-ramp for casual users, give Python power users the in-cell `numpy` they already want, and give Rust developers a path from "scripted preview" all the way down to "real `rustc`-compiled code" without leaving the workbook.
+- **Four tessellating cell lattices** — **Squares**, **Hexagons** (pointy- and flat-top), **Triangles**, and **Voronoi** (with Delaunay-correct adjacency, draggable/freezable seeds, and persisted seed geometry).
+- **Carbide formula language + multi-engine core** — Excel-style formulas with `LET` / `LAMBDA` / `LETREC`, dynamic arrays & spill, lattice neighborhood functions (`NEIGHBORS`, `RADIUS`), `XLOOKUP` (including wildcards), `OFFSET` / `INDIRECT`, an optional **Carbide → Rust native transpiler** (`--features native`), and an optional **embedded Python engine** via PyO3 (`--features python`).
+- **Programmable widgets & Stage Mode** — in-cell sliders, toggles, buttons, and progress bars wired straight into the reactive DAG, plus **Stage Mode** (`Ctrl+Shift+P`) to hide editing chrome for mock apps and games.
+- **Pure-Rust native & WebAssembly front-end** — `apps/carbide-ui` (`egui`/`eframe`) compiles to both native desktop and `wasm32-unknown-unknown`, with `.crbd` workbook persistence (and `.tscl` load back-compat) plus browser `localStorage` autosave.
 
 ## Quick links
 
-- [`PLAN.md`](./PLAN.md) — the canonical architecture document.
-- [`CLAUDE.md`](./CLAUDE.md) — project-specific guidance for Claude Code.
+- [`docs/README.md`](./docs/README.md) — Sprint Loops Project Book (intents, work ledgers, sprint records, and [`docs/history/decisions-legacy.md`](./docs/history/decisions-legacy.md)).
+- [`docs/carbide/README.md`](./docs/carbide/README.md) — Carbide formula language specification and CI-verified [`reference.md`](./docs/carbide/reference.md).
+- [`docs/all-rust-roadmap.md`](./docs/all-rust-roadmap.md) — All-Rust + Carbide-to-Rust transpiler execution roadmap.
+- [`PLAN.md`](./PLAN.md) — Long-term architecture vision.
+- [`CLAUDE.md`](./CLAUDE.md) — Repository contributor and agent guidance.
 
-## Building
+## Building and running
 
-Build steps will be filled in as Phase 0 lands. Requires:
+Requires **Rust (stable)** (and optionally `wasm32-unknown-unknown` target + [Trunk](https://trunkrs.dev/) for WebAssembly, or CPython 3.12+ headers for `--features python`).
 
-- Rust (stable, 1.75+)
-- Node.js 20+
-- (For Python engine, later) CPython 3.12+ headers/libs
+```bash
+# Core workspace (carbide-core, carbide-tess, carbide-formula, carbide-store, carbide-cli)
+cargo build --workspace
+cargo test --workspace
+
+# Optional formula engine features
+cargo test -p carbide-formula --features native
+cargo test -p carbide-formula --features python
+
+# Pure-Rust GUI (native desktop)
+cargo run --manifest-path apps/carbide-ui/Cargo.toml
+cargo test --manifest-path apps/carbide-ui/Cargo.toml
+
+# Pure-Rust GUI (WebAssembly)
+cargo build --manifest-path apps/carbide-ui/Cargo.toml --target wasm32-unknown-unknown
+```
 
 ## License
 

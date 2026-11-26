@@ -1,63 +1,70 @@
 # CLAUDE.md — Carbide
 
-This file gives Claude Code (claude.ai/code) project-specific guidance. It overrides the global `~/.claude/CLAUDE.md` where they conflict.
+Project-specific guidance for contributors and coding agents working in Carbide.
 
 ## What this project is
 
-Carbide is a DAG-evaluated spreadsheet with **non-square tessellating cells** (squares, hexes, triangles, parallelograms, and beyond) and a **switchable formula language per cell** (Excel-lite, Python via PyO3, Rust via Rhai-preview + rustc-native).
+Carbide is a pure-Rust, DAG-evaluated spreadsheet with **non-square tessellating cells** (squares, hexagons, triangles, and Voronoi cells — with further tilings on the roadmap) and a **switchable formula language per cell** (Carbide / Excel-lite with an optional Carbide→Rust native transpiler, plus embedded Python via PyO3).
 
-**Read `PLAN.md` before doing non-trivial work.** It is the canonical architecture document and supersedes anything in this file if they diverge.
+- **Project Book (`docs/`):** Canonical Sprint Loops Book v2 state (`docs/intents/`, `docs/work/`, `docs/sprints/`). Historical architectural decisions (ADR-001 through ADR-015) live in `docs/history/decisions-legacy.md`.
+- **Architecture & specs:** See `PLAN.md`, `docs/all-rust-roadmap.md`, and `docs/carbide/README.md`.
 
 ## Languages and stack
 
-This is a **Rust-first** project; the global preference applies here strongly.
+This is a **100% Rust** repository split across two Cargo workspaces:
 
-- **Rust core** (workspace under `crates/`) owns all evaluation, persistence, and tessellation math. New domain logic goes here, not in TypeScript.
-- **Electron + React + TypeScript** under `apps/desktop/` is a thin renderer. It owns layout, drawing, and UI state — not workbook logic. Resist the temptation to put computation in the renderer.
-- **Tauri port comes later** (Phase 5+). Don't preemptively avoid Electron-specific APIs; we'll deal with the port when the project earns it.
+- **Core workspace** (root `Cargo.toml`, crates under `crates/`):
+  - `carbide-core`: `Workbook`, `Sheet`, `Cell`, `CellValue`, `Dag`, `SheetExtent`.
+  - `carbide-tess`: `Lattice` trait, `LatticeHandle`, and concrete tessellations (`square`, `hex`, `triangle`, `voronoi`).
+  - `carbide-formula`: `WorkbookEngine`, `FormulaEngine` trait, `excellite` (Carbide interpreter + stdlib), `transpile` (Carbide→Rust codegen + `--features native` `cdylib` pipeline), and `--features python` (PyO3).
+  - `carbide-store`: `.crbd` v2 zip archive persistence (opaque `ui.json` sidecar + `.tscl` load back-compat).
+  - `carbide-cli`: structural CLI entry point for future headless commands.
+- **UI sub-workspace** (`apps/carbide-ui/Cargo.toml`):
+  - Pure-Rust `egui` / `eframe` application compiled to both native desktop and `wasm32-unknown-unknown`, consuming the core crates directly in-process. Keep domain logic in `crates/`, not in the UI layer.
 
-Formula engines live under `crates/carbide-formula/src/<engine>/`. Each engine is gated behind a Cargo feature (`python`, `rhai`, `rustnative`) so the project builds without PyO3 / rustc-as-a-library available on a CI machine.
+Formula engine Cargo features in `crates/carbide-formula/Cargo.toml`: `native` (Carbide→Rust `cdylib` compilation via `libloading`), `python` (PyO3), plus reserved `rhai` and `rustnative` flags so default builds stay lean without optional toolchains.
 
 ## Working norms
 
-- **Workspace-aware tests.** Run `cargo test -p <crate>` for the crate you changed, not `cargo test` across the whole workspace, unless your change crosses crate boundaries.
-- **Formatters/linters** (from global CLAUDE.md): `cargo fmt`, `cargo clippy`, and on the frontend `prettier` + `eslint` (configs to land with Phase 1 — until then, match existing style).
-- **No premature abstraction.** The plan lists future tilings and engines, but only build what the current phase needs. Add the trait + first impl; don't pre-implement the third lattice "for symmetry".
-- **The Lattice trait is load-bearing.** Changes to `carbide-tess::Lattice` ripple into every renderer module and every formula engine. Discuss in PR before changing the trait signature.
+- **Workspace-aware tests.** Run `cargo test -p <crate>` for the crate you changed, or `cargo test --workspace` when changes cross crate boundaries.
+- **Formatters/linters:** `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` (plus the same with `--manifest-path apps/carbide-ui/Cargo.toml` for UI changes).
+- **No premature abstraction.** Build what the current sprint intent requires; avoid speculative traits or unused lattices.
+- **The `Lattice` trait is load-bearing.** Changes to `carbide-tess::Lattice` ripple into every UI renderer and formula engine. Review carefully before altering its signature.
 
 ## What NOT to do without asking
 
-- **Don't add a third execution mode** (e.g., WASM-based Python, an LLM-based formula engine) without an explicit ask. The four engines in PLAN.md §6.2 are the scope.
-- **Don't replace the JSON-RPC IPC** with a native Node module / FFI binding. The subprocess split is deliberate (see PLAN.md §2).
-- **Don't change the file format** (`.crbd`) shape without bumping `manifest.json` version and adding an upgrade path.
-- **Don't merge changes that introduce a new lattice without a `Lattice` impl + parser + renderer + at least one test sheet** — partial lattice support is worse than none.
+- **Don't add an unrequested formula engine** (e.g., WASM-based Python or an LLM-based engine) without an explicit ask.
+- **Don't change the `.crbd` zip schema** without bumping `FORMAT_VERSION` in `crates/carbide-store/src/lib.rs` and adding a backward-compatible upgrade path (additive `#[serde(default)]` fields inside `ui.json` follow ADR-001; see `docs/history/decisions-legacy.md`).
+- **Don't merge a partial new lattice** without a `Lattice` impl, address parser, UI renderer, and test coverage.
 
-## Build commands (placeholder — to be filled in as Phase 0 lands)
+## Build and test commands
 
 ```bash
-# Rust core
-cargo build               # workspace
-cargo test -p carbide-core
-cargo run --bin carbide-cli -- --help
+# Core workspace
+cargo build --workspace
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+cargo clippy -p carbide-formula --features native --all-targets -- -D warnings
+cargo run --bin carbide-cli
 
-# Desktop app
-cd apps/desktop
-npm install
-npm run dev               # vite + electron in dev mode
-npm run build             # production build
+# Pure-Rust UI (native + wasm32)
+cargo run --manifest-path apps/carbide-ui/Cargo.toml
+cargo test --manifest-path apps/carbide-ui/Cargo.toml
+cargo clippy --manifest-path apps/carbide-ui/Cargo.toml --all-targets -- -D warnings
+cargo build --manifest-path apps/carbide-ui/Cargo.toml --target wasm32-unknown-unknown
 ```
 
 ## Running shell commands
 
-The Bash / PowerShell tool starts in the repo root (`C:\Users\charl\Carbide`) and its working directory persists between calls — **do not prepend `cd`** to commands. A `cd` combined with output redirection (`>`, `2>&1`) in a compound command trips a sandbox guard ("Compound command contains cd with output redirection — manual approval required to prevent path resolution bypass") and forces a needless approval prompt. Dropping the redundant `cd` avoids the guard entirely (it does not weaken it).
+The shell starts in the repo root (`C:\Users\charl\carbide`) — **do not prepend `cd`** to commands. Combining `cd` with output redirection (`>`, `2>&1`) in a compound command trips sandbox path-resolution guards.
 
 - `git`, `gh`, and any repo-root command: run bare — no `cd` prefix.
-- `cargo` for the `apps/carbide-ui` crate (it is its own `[workspace]`): pass `--manifest-path apps/carbide-ui/Cargo.toml` — e.g. `cargo test --manifest-path apps/carbide-ui/Cargo.toml` — rather than `cd apps/carbide-ui && cargo test`.
-- Watching a CI run to completion — a backgrounded `gh run watch --exit-status` — is a routine, expected step of the version loop, not something to confirm each iteration. `.claude/settings.json` allowlists the read-only CI commands (`gh run watch` / `list` / `view`) so they run without a prompt.
+- `cargo` for `apps/carbide-ui` (its own `[workspace]`): pass `--manifest-path apps/carbide-ui/Cargo.toml` — e.g. `cargo test --manifest-path apps/carbide-ui/Cargo.toml` — rather than changing directories.
+- Watching a CI run to completion (`gh run watch --exit-status`) is a routine step of the loop; `.claude/settings.json` allowlists read-only `gh run` commands.
 
 ## Repo identity
 
 - Owner: `crussella0129`
 - GitHub: `https://github.com/crussella0129/carbide` (`git@github.com:crussella0129/carbide.git`)
 - License: MIT OR Apache-2.0 (dual)
-- Default branch: `main`
+- Branches: `main` (base) / `dev` (Sprint Loops work branch, see `docs/work/remote-profile.md`)

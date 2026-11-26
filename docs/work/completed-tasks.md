@@ -230,3 +230,10 @@
 - **Completed:** 2026-11-26T17:12:30Z
 - **Files modified:** .github/workflows/ci.yml
 - **Commit:** `6d7da0139608a8dd1f497bb7ab3530892fa8f739`
+
+## T-004 (sprint 12)
+- **Description:** Refresh stale Phase-0 / Electron documentation in `README.md` and `CLAUDE.md` to accurately reflect the pure-Rust workspace + `apps/carbide-ui` (`egui`/`eframe` native + wasm32) stack, 4 implemented lattices, `native`/`python` Cargo features, Book v2 layout (`docs/` + `docs/history/decisions-legacy.md`), and working `cargo` build/test commands.
+- **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+- **Completed:** 2026-11-26T17:13:00Z
+- **Files modified:** README.md, CLAUDE.md
+- **Commit:** PENDING
