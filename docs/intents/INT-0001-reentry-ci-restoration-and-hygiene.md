@@ -2,7 +2,7 @@
 
 <!-- sprint-loop-intent-v2 -->
 - **Intent ID:** INT-0001
-- **State:** planned
+- **State:** active
 - **Work evidence:** [Sprint 12 build plan](../sprints/s12/sprint-plans/build-plan.md), [Sprint 12 test plan](../sprints/s12/sprint-plans/test-plan.md), [T-001..T-004](../work/tasks.md)
 - **Completion evidence:** none
 - **Code evidence:** none
@@ -48,3 +48,4 @@ After 6 months, Rust stable advanced to 1.99.1 and elevated `float_literal_f32_f
 ## Transition history
 - 2026-11-26: created as `proposed` during Sprint 12 6-month project assessment.
 - 2026-11-26: transitioned `proposed` → `planned` with Sprint 12 build/test plans and tasks `T-001`–`T-004`.
+- 2026-11-26: transitioned `planned` → `active` at Sprint 12 Build Phase start.
