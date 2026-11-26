@@ -7,6 +7,8 @@ use carbide_tess::voronoi::{VoronoiCoord, VoronoiLattice};
 use carbide_tess::{Lattice, Point2};
 use eframe::egui;
 
+use crate::clipboard::{Clipboard, PasteMode, SourceLattice};
+
 /// The `V(N)` address string for a Voronoi coord — matches the
 /// canonical form `carbide-tess`'s voronoi lattice emits.
 pub(super) fn voronoi_address(c: VoronoiCoord) -> String {
@@ -231,4 +233,116 @@ pub(super) fn cells_in_screen_rect(
             screen_rect.contains(p)
         })
         .collect()
+}
+
+/// Build the destination writes and written coordinates when pasting
+/// `clipboard` onto a Voronoi sheet starting at `cursor` (`V(cursor.0 + i)`),
+/// truncating cleanly at `lattice_len`. Same-lattice `PasteMode::Normal`
+/// preserves raw formulas; cross-lattice or `PasteMode::ValuesOnly` writes
+/// evaluated literals via `Clipboard::paste_text`.
+pub(super) fn voronoi_paste_targets(
+    clipboard: &Clipboard,
+    cursor: VoronoiCoord,
+    lattice_len: u32,
+    mode: PasteMode,
+) -> (Vec<(String, Option<String>)>, Vec<VoronoiCoord>) {
+    let mut targets = Vec::new();
+    let mut coords = Vec::new();
+    for (i, (_, _, cell)) in clipboard.entries().enumerate() {
+        let Some(idx) = cursor.0.checked_add(i as u32) else {
+            break;
+        };
+        if idx >= lattice_len {
+            break;
+        }
+        let coord = VoronoiCoord(idx);
+        let source = clipboard.paste_text(cell, SourceLattice::Voronoi, mode);
+        targets.push((voronoi_address(coord), source));
+        coords.push(coord);
+    }
+    (targets, coords)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::clipboard::CopiedCell;
+
+    fn formula(source: &str, value: &str) -> CopiedCell {
+        CopiedCell {
+            source: Some(source.to_string()),
+            value: Some(value.to_string()),
+        }
+    }
+
+    #[test]
+    fn voronoi_paste_targets_same_lattice_preserves_formulas_and_selection() {
+        let clip = Clipboard::capture(
+            1,
+            2,
+            vec![formula("=V(0)+1", "11"), formula("=V(1)*2", "20")],
+            SourceLattice::Voronoi,
+        );
+        let (targets, coords) = voronoi_paste_targets(&clip, VoronoiCoord(3), 8, PasteMode::Normal);
+        assert_eq!(
+            targets,
+            vec![
+                ("V(3)".to_string(), Some("=V(0)+1".to_string())),
+                ("V(4)".to_string(), Some("=V(1)*2".to_string())),
+            ]
+        );
+        assert_eq!(coords, vec![VoronoiCoord(3), VoronoiCoord(4)]);
+    }
+
+    #[test]
+    fn voronoi_paste_targets_cross_lattice_and_values_only_degrade_to_literals() {
+        let from_square = Clipboard::capture(
+            2,
+            1,
+            vec![formula("=SUM(A1:A3)", "42"), formula("=B1", "hi")],
+            SourceLattice::Square,
+        );
+        let (targets, coords) =
+            voronoi_paste_targets(&from_square, VoronoiCoord(1), 8, PasteMode::Normal);
+        assert_eq!(
+            targets,
+            vec![
+                ("V(1)".to_string(), Some("42".to_string())),
+                ("V(2)".to_string(), Some("hi".to_string())),
+            ]
+        );
+        assert_eq!(coords, vec![VoronoiCoord(1), VoronoiCoord(2)]);
+
+        let from_voronoi = Clipboard::capture(
+            1,
+            1,
+            vec![formula("=V(0)*10", "50")],
+            SourceLattice::Voronoi,
+        );
+        let (val_targets, _) =
+            voronoi_paste_targets(&from_voronoi, VoronoiCoord(0), 8, PasteMode::ValuesOnly);
+        assert_eq!(
+            val_targets,
+            vec![("V(0)".to_string(), Some("50".to_string()))]
+        );
+    }
+
+    #[test]
+    fn voronoi_paste_targets_truncates_at_lattice_len() {
+        let clip = Clipboard::capture(
+            1,
+            3,
+            vec![formula("1", "1"), formula("2", "2"), formula("3", "3")],
+            SourceLattice::Voronoi,
+        );
+        let (targets, coords) = voronoi_paste_targets(&clip, VoronoiCoord(6), 8, PasteMode::Normal);
+        assert_eq!(
+            targets,
+            vec![
+                ("V(6)".to_string(), Some("1".to_string())),
+                ("V(7)".to_string(), Some("2".to_string())),
+            ]
+        );
+        assert_eq!(coords, vec![VoronoiCoord(6), VoronoiCoord(7)]);
+    }
 }

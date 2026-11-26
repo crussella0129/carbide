@@ -12,12 +12,13 @@ use crate::keymap::{self, Command, Mode};
 use crate::ribbon::RibbonAction;
 use crate::selection::{FillDir, HexSelection, Selection, TriangleSelection};
 use crate::sort;
-use crate::widget;
+use crate::widget::{self, WidgetKind};
 
 use super::helpers::{
-    hex_address, hex_autosum, hex_current_region, hex_in_view, triangle_address, triangle_autosum,
+    hex_address, hex_autosum, hex_current_region, hex_in_view, toggle_widget_kind,
+    triangle_address, triangle_autosum,
 };
-use super::types::{Action, ActiveSheet, CellId, FormatEdit, HexFormatEdit};
+use super::types::{Action, ActiveSheet, CellId, FormatEdit};
 use super::{CarbideApp, COLS, EDIT_KEYS, HEX_VIEW_RADIUS, NAV_KEYS, ROWS, TRIANGLE_RADIUS};
 
 impl CarbideApp {
@@ -125,12 +126,7 @@ impl CarbideApp {
             }
             Command::Cancel => {
                 self.edit = None;
-                self.square.formula_highlight = None;
-                self.square.formula_drag = None;
-                self.hex.formula_highlight = None;
-                self.hex.formula_drag = None;
-                self.triangle.formula_highlight = None;
-                self.triangle.formula_drag = None;
+                self.clear_formula_refs();
             }
             Command::ClearMarquee => {
                 // Escape exits Stage Mode first — that's the most
@@ -140,7 +136,7 @@ impl CarbideApp {
                     self.stage_mode = false;
                     return;
                 }
-                if self.clipboard.cut_origin().is_some() {
+                if self.clipboard.has_cut() {
                     self.clipboard.consume_cut();
                 }
                 self.format_painter = None;
@@ -302,10 +298,8 @@ impl CarbideApp {
             RibbonAction::SelectAll => self.select_all(),
             RibbonAction::SelectRegion => self.select_region(),
             RibbonAction::OpenNote => {
-                let cell = self.square.selection.cursor;
-                self.note_cell = CellId::Square(cell);
-                self.note_draft = self.notes.get(cell).to_string();
-                self.note_open = true;
+                let cell = self.active_cell_id();
+                self.open_note(cell);
             }
             RibbonAction::Quit => {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
@@ -333,23 +327,39 @@ impl CarbideApp {
         }
     }
 
-    /// Turn the selected square-sheet cells into boolean checkbox cells,
-    /// or back into ordinary cells if they all already are. A no-op on
-    /// the hex sheet, which has no widgets yet.
+    /// Toggle `kind` (Toggle or Button) across the active sheet's selection
+    /// on any lattice — using `selection.cells()` on Voronoi so marquee
+    /// `Selection.extra` cells are included.
+    fn toggle_multi_lattice_widget(&mut self, kind: WidgetKind) {
+        match self.active {
+            ActiveSheet::Square => {
+                let cells = self.square.selection.primary_cells();
+                toggle_widget_kind(&mut self.square_widgets, &cells, kind);
+            }
+            ActiveSheet::Hex => {
+                let cells = self.hex.selection.primary_cells();
+                toggle_widget_kind(&mut self.hex_widgets, &cells, kind);
+            }
+            ActiveSheet::Triangle => {
+                let cells = self.triangle.selection.primary_cells();
+                toggle_widget_kind(&mut self.triangle_widgets, &cells, kind);
+            }
+            ActiveSheet::Voronoi => {
+                let cells = self.voronoi.selection.cells();
+                toggle_widget_kind(&mut self.voronoi_widgets, &cells, kind);
+            }
+        }
+    }
+
+    /// Turn the selected cells on the active sheet into boolean checkbox
+    /// cells, or back into ordinary cells if they all already are.
     pub(super) fn toggle_widget_cells(&mut self) {
-        if self.active != ActiveSheet::Square {
-            return;
-        }
-        let cells = self.square.selection.primary_cells();
-        let all_on = cells.iter().all(|&c| self.square_widgets.is_toggle(c));
-        for cell in cells {
-            self.square_widgets.set_toggle(cell, !all_on);
-        }
+        self.toggle_multi_lattice_widget(WidgetKind::Toggle);
     }
 
     /// Convert the selected square cells into slider widgets — or
     /// back into ordinary cells if they all already are. Sliders use
-    /// the default 0–100 range; per-cell range config lands later.
+    /// the default 0–100 range and remain square-only (ADR-006).
     fn toggle_slider_cells(&mut self) {
         if self.active != ActiveSheet::Square {
             return;
@@ -361,17 +371,10 @@ impl CarbideApp {
         }
     }
 
-    /// Convert the selected square cells into button widgets — or
-    /// back into ordinary cells if they all already are.
+    /// Convert the selected cells on the active sheet into button widgets
+    /// — or back into ordinary cells if they all already are.
     fn toggle_button_cells(&mut self) {
-        if self.active != ActiveSheet::Square {
-            return;
-        }
-        let cells = self.square.selection.primary_cells();
-        let all_on = cells.iter().all(|&c| self.square_widgets.is_button(c));
-        for cell in cells {
-            self.square_widgets.set_button(cell, !all_on);
-        }
+        self.toggle_multi_lattice_widget(WidgetKind::Button);
     }
 
     /// Convert the selected square cells into progress-bar widgets
@@ -614,7 +617,7 @@ impl CarbideApp {
             }
             self.square.formats.update(cell, |f| *f = after.clone());
             edits.push(FormatEdit {
-                cell,
+                cell: CellId::Square(cell),
                 before,
                 after,
             });
@@ -645,14 +648,14 @@ impl CarbideApp {
                 continue;
             }
             self.hex.formats.update(cell, |f| *f = after.clone());
-            edits.push(HexFormatEdit {
-                cell,
+            edits.push(FormatEdit {
+                cell: CellId::Hex(cell),
                 before,
                 after,
             });
         }
         if !edits.is_empty() {
-            self.history.record(Action::HexFormats(edits));
+            self.history.record(Action::Formats(edits));
         }
     }
 }

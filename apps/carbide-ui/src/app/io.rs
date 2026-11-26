@@ -83,7 +83,7 @@ impl CarbideApp {
             wasm_bindgen_futures::spawn_local(async move {
                 if let Some(handle) = rfd::AsyncFileDialog::new()
                     .set_file_name("workbook.crbd")
-                    .add_filter("Carbide", &["tscl"])
+                    .add_filter("Carbide", &["crbd"])
                     .save_file()
                     .await
                 {
@@ -121,7 +121,7 @@ impl CarbideApp {
             let slot = self.pending_open_bytes.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 if let Some(handle) = rfd::AsyncFileDialog::new()
-                    .add_filter("Carbide", &["tscl"])
+                    .add_filter("Carbide", &["crbd", "tscl"])
                     .pick_file()
                     .await
                 {
@@ -223,6 +223,8 @@ impl CarbideApp {
         hex_formats.replace_with(self.hex.formats.iter().map(|(k, v)| (*k, v.clone())));
         let mut tri_formats = FormatMap::new();
         tri_formats.replace_with(self.triangle.formats.iter().map(|(k, v)| (*k, v.clone())));
+        let mut vor_formats = FormatMap::new();
+        vor_formats.replace_with(self.voronoi.formats.iter().map(|(k, v)| (*k, v.clone())));
 
         let mut sq_widgets: widget::Widgets<(u32, u32)> = widget::Widgets::default();
         sq_widgets.replace_with(self.square_widgets.iter().map(|(k, v)| (*k, *v)));
@@ -240,6 +242,7 @@ impl CarbideApp {
             square_formats: sq_formats,
             hex_formats,
             triangle_formats: tri_formats,
+            voronoi_formats: vor_formats,
             square_widgets: sq_widgets,
             hex_widgets,
             triangle_widgets: tri_widgets,
@@ -256,6 +259,11 @@ impl CarbideApp {
                 .collect(),
             triangle_notes: self
                 .triangle_notes
+                .iter()
+                .map(|(k, v)| (*k, v.to_string()))
+                .collect(),
+            voronoi_notes: self
+                .voronoi_notes
                 .iter()
                 .map(|(k, v)| (*k, v.to_string()))
                 .collect(),
@@ -290,6 +298,9 @@ impl CarbideApp {
         self.triangle
             .formats
             .replace_with(s.triangle_formats.iter().map(|(k, v)| (*k, v.clone())));
+        self.voronoi
+            .formats
+            .replace_with(s.voronoi_formats.iter().map(|(k, v)| (*k, v.clone())));
         self.square_widgets
             .replace_with(s.square_widgets.iter().map(|(k, v)| (*k, *v)));
         self.hex_widgets
@@ -301,6 +312,7 @@ impl CarbideApp {
         self.notes.replace_with(s.square_notes);
         self.hex_notes.replace_with(s.hex_notes);
         self.triangle_notes.replace_with(s.triangle_notes);
+        self.voronoi_notes.replace_with(s.voronoi_notes);
         self.cond_rules = s.conditional_rules;
         self.metrics.replace_with(s.column_widths, s.row_heights);
     }

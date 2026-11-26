@@ -265,3 +265,35 @@
 - **Completed:** 2026-11-26T18:02:00Z
 - **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/edit.rs
 - **Commit:** `ff1d4be1a4191d6e7d192d96c76922d31e8de0a7`
+
+
+## T-001 (sprint 14)
+- **Description:** Unify four-lattice formatting (`FormatEdit { cell: CellId }`, `Action::Formats`, `merge_format_edits`, `format_range`, `toggle_range`), wire Voronoi ribbon/LayoutJob text/fill rendering and marquee `Selection.extra` formatting + status-bar deduplicated count, and persist `voronoi_formats` in `UiSnapshot` with strict v2 backward-compat tests.
+- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
+- **Completed:** 2026-11-26T18:31:30Z
+- **Files modified:** apps/carbide-ui/src/app/types.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/edit.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/state_io.rs, apps/carbide-ui/src/app/tests.rs
+- **Commit:** `08d20f6ba13b18f817295d2f85db6145eff1c922`
+
+
+## T-002 (sprint 14)
+- **Description:** Add `voronoi_notes`, unify `active_cell_id` / `note_text` / `open_note` across all four sheets (fixing `RibbonAction::OpenNote` on non-square sheets), add Voronoi note marker dots (outside empty/widget guards), error/note hover tooltips, right-click context menu, and persist `voronoi_notes` in `UiSnapshot` with strict v2 backward-compat tests.
+- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
+- **Completed:** 2026-11-26T18:33:30Z
+- **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/dialogs.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/state_io.rs
+- **Commit:** `975a893fab042404d5020b2aabb3f47d236dc8b9`
+
+
+## T-003 (sprint 14)
+- **Description:** Add `SourceLattice::Voronoi` and single `Option<CutOrigin>` (`Grid` | `Voronoi`) to `Clipboard`, wire Voronoi copy/cut/paste (with `1 × N` marquee capture, dashed cut outline, Escape `has_cut()` cancel, post-paste marquee selection, and cross-lattice degradation), unify atomic multi-sheet cut/paste (`apply_multi_sheet_edits`, `cut_clear_targets`, `dedup_sheet_targets`) and `clear_formula_refs`, and make Voronoi `clear_active`/`begin_edit` marquee-aware.
+- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
+- **Completed:** 2026-11-26T18:38:30Z
+- **Files modified:** apps/carbide-ui/src/clipboard.rs, apps/carbide-ui/src/app/edit.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/voronoi_helpers.rs
+- **Commit:** `0705c9e15806ef396991b4937cf9e22bc4697952`
+
+
+## T-004 (sprint 14)
+- **Description:** Extract discriminant-safe `toggle_widget_kind` helper across Square, Hex, Triangle, and Voronoi (Toggle + Button, marquee-aware `Selection.extra` on Voronoi; Slider/ProgressBar remain Square-only per ADR-006), fix wasm32 `.crbd`/`.tscl` dialog filters in `io.rs`, and add unit test coverage (315/315 UI tests green, native + wasm32 clean, max file 819 lines).
+- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
+- **Completed:** 2026-11-26T18:40:20Z
+- **Files modified:** apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/io.rs
+- **Commit:** `abe5e580c0f7e1438892fccea31f5a90edf8a5d6`

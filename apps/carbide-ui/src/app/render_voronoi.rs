@@ -5,10 +5,13 @@ use carbide_tess::voronoi::VoronoiCoord;
 use carbide_tess::{Lattice, Point2};
 use eframe::egui;
 
+use crate::clipboard::PasteMode;
+use crate::format;
 use crate::formula_mode;
 use crate::widget;
 
-use super::types::EditState;
+use super::helpers::{draw_text_decorations, error_detail};
+use super::types::{CellId, EditState};
 use super::voronoi_helpers::{
     apply_seed_drag, cells_in_screen_rect, fade_alpha, pop_out_widget_center, seed_handle_alphas,
     synced_voronoi_lattice, voronoi_address, WIDGET_POP_OUT_OFFSET,
@@ -18,11 +21,10 @@ use super::CarbideApp;
 impl CarbideApp {
     /// Render the Voronoi sheet — Demo C from the launch brief. Eight
     /// (or however many seeds the lattice carries) cell polygons fill
-    /// the central panel; each cell displays its evaluated value. Click
-    /// to select; F2 or double-click to edit. v150 ships read-only-ish
-    /// interaction (single-cell selection + formula-bar edit); widgets,
-    /// formatting, range selection, fill drag, and copy/paste on
-    /// Voronoi all wait for v151.
+    /// the central panel; each cell displays its evaluated value with
+    /// full cell formatting, note markers/tooltips, right-click context
+    /// menu, marquee multi-cell selection (`Selection.extra`), Toggle/
+    /// Button widgets, seed-handle dragging, and copy/cut/paste parity.
     pub(super) fn draw_voronoi_grid(&mut self, ui: &mut egui::Ui) {
         let size = ui.available_size();
         let (response, painter) = ui.allocate_painter(size, egui::Sense::click_and_drag());
@@ -139,6 +141,69 @@ impl CarbideApp {
             }
         }
 
+        // Right-click selects the Voronoi cell under the pointer (unless it
+        // is already part of the selection), then opens the cell-actions menu.
+        if response.secondary_clicked() {
+            if let Some(coord) = cell_under {
+                if !self.voronoi.selection.contains(coord) {
+                    self.commit_edit();
+                    self.voronoi.selection.collapse_to(coord);
+                    self.voronoi_visit_history.clear();
+                }
+            }
+        }
+        response.context_menu(|ui| {
+            if ui.button("Copy").clicked() {
+                self.copy_selection(ui.ctx());
+                ui.close_menu();
+            }
+            if ui.button("Cut").clicked() {
+                self.cut_selection(ui.ctx());
+                ui.close_menu();
+            }
+            if ui.button("Paste").clicked() {
+                self.paste(PasteMode::Normal);
+                ui.close_menu();
+            }
+            if ui.button("Paste values").clicked() {
+                self.paste(PasteMode::ValuesOnly);
+                ui.close_menu();
+            }
+            if ui.button("Clear").clicked() {
+                self.clear_active();
+                ui.close_menu();
+            }
+            ui.separator();
+            if ui.button("Edit note…").clicked() {
+                self.open_note(CellId::Voronoi(self.voronoi.selection.cursor));
+                ui.close_menu();
+            }
+        });
+
+        // A hovered Voronoi cell shows its error detail, or failing that its note.
+        if let Some(p) = response.hover_pos() {
+            let local = Point2::new(p.x - origin.x, p.y - origin.y);
+            if let Some(coord) = self.voronoi_lattice.cell_at(local) {
+                if let CellValue::Error(e) = self.voronoi_cell_value(coord) {
+                    let detail = error_detail(&e);
+                    egui::show_tooltip_at_pointer(
+                        ui.ctx(),
+                        ui.layer_id(),
+                        egui::Id::new("voronoi_error_tooltip"),
+                        |ui| ui.label(detail),
+                    );
+                } else if self.voronoi_notes.has(coord) {
+                    let note = self.voronoi_notes.get(coord).to_string();
+                    egui::show_tooltip_at_pointer(
+                        ui.ctx(),
+                        ui.layer_id(),
+                        egui::Id::new("voronoi_note_tooltip"),
+                        |ui| ui.label(note),
+                    );
+                }
+            }
+        }
+
         // First pass — fill + outline every Voronoi cell.
         let stroke =
             egui::Stroke::new(1.0_f32, ui.visuals().widgets.noninteractive.bg_stroke.color);
@@ -162,11 +227,14 @@ impl CarbideApp {
                 .iter()
                 .map(|v| egui::pos2(origin.x + v.x, origin.y + v.y))
                 .collect();
-            let fill = palette[(i as usize) % palette.len()];
+            let fmt = self.voronoi_effective_format(coord);
+            let fill = fmt.fill.unwrap_or(palette[(i as usize) % palette.len()]);
             painter.add(egui::Shape::convex_polygon(pts, fill, stroke));
         }
 
-        // Second pass — cell value text at each centroid. Widget cells
+        // Second pass — cell value text at each centroid, formatted with
+        // LayoutJob so italics, faux-bold, font size, colour, negative-red,
+        // and underline/strikethrough all render faithfully. Widget cells
         // are skipped: the Button/Toggle paints over the centroid, and
         // showing the value behind it bleeds the source through.
         let fg = ui.visuals().text_color();
@@ -181,18 +249,54 @@ impl CarbideApp {
             if text.is_empty() {
                 continue;
             }
-            painter.text(
-                pos,
-                egui::Align2::CENTER_CENTER,
-                text,
-                egui::FontId::proportional(14.0),
-                fg,
+            let fmt = self.voronoi_effective_format(coord);
+            let value = self.voronoi_cell_value(coord);
+            let is_negative = match value {
+                CellValue::Number(n) => n < 0.0,
+                CellValue::Integer(n) => n < 0,
+                _ => false,
+            };
+            let color = format::effective_text_color(&fmt, is_negative, fg);
+            let mut job = egui::text::LayoutJob::default();
+            job.append(
+                &text,
+                0.0,
+                egui::TextFormat {
+                    font_id: egui::FontId::proportional(fmt.font_size.points()),
+                    color,
+                    italics: fmt.italic,
+                    ..Default::default()
+                },
+            );
+            let galley = painter.layout_job(job);
+            let size = galley.size();
+            let top_left = egui::pos2(pos.x - size.x / 2.0, pos.y - size.y / 2.0);
+            painter.galley(top_left, galley.clone(), color);
+            if fmt.bold {
+                painter.galley(top_left + egui::vec2(0.55, 0.0), galley, color);
+            }
+            draw_text_decorations(
+                &painter,
+                egui::Rect::from_min_size(top_left, size),
+                &fmt,
+                color,
             );
         }
 
+        // Note marker dots — drawn outside the widget/empty-text early-continue
+        // guards so empty or widget cells with notes still display their marker.
+        for i in 0..self.voronoi_lattice.len() as u32 {
+            let coord = VoronoiCoord(i);
+            if self.voronoi_notes.has(coord) {
+                let centroid = self.voronoi_lattice.centroid(coord);
+                let dot = egui::pos2(origin.x + centroid.x, origin.y + centroid.y - 16.0);
+                painter.circle_filled(dot, 3.0, egui::Color32::from_rgb(220, 90, 70));
+            }
+        }
+
         // Third pass — selection stroke around every selected cell. Uses
-        // `selection.cells()` which (after T-001) returns the rect cells +
-        // `extra`, so marquee-selected cells get outlined too (ADR-013).
+        // `selection.cells()` which returns the anchor + `extra`, so
+        // marquee-selected cells get outlined too (ADR-013).
         let sel_stroke = egui::Stroke::new(2.5_f32, egui::Color32::from_rgb(70, 120, 220));
         for coord in self.voronoi.selection.cells() {
             let verts = self.voronoi_lattice.vertices(coord);
@@ -207,6 +311,26 @@ impl CarbideApp {
                 pts.push(first);
             }
             painter.add(egui::Shape::line(pts, sel_stroke));
+        }
+
+        // Cut marquee — dashed outline around every Voronoi cell armed for
+        // clearing on the next paste (cleared on paste or Escape).
+        if let Some(cut_cells) = self.clipboard.cut_voronoi_cells() {
+            let dash = egui::Stroke::new(1.5_f32, sel_stroke.color);
+            for &coord in cut_cells {
+                let verts = self.voronoi_lattice.vertices(coord);
+                if verts.is_empty() {
+                    continue;
+                }
+                let mut loop_pts: Vec<egui::Pos2> = verts
+                    .iter()
+                    .map(|v| egui::pos2(origin.x + v.x, origin.y + v.y))
+                    .collect();
+                if let Some(&first) = loop_pts.first() {
+                    loop_pts.push(first);
+                }
+                painter.extend(egui::Shape::dashed_line(&loop_pts, dash, 4.0, 3.0));
+            }
         }
 
         // Translucent marquee rect (T-006B) — visible while a marquee drag is

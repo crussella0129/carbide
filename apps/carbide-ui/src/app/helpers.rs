@@ -1,7 +1,7 @@
 //! Pure drawing, navigation, formatting, and edit-coalescing helpers shared
 //! across `CarbideApp` submodules.
 
-use carbide_core::{CellError, CellValue, EngineKind};
+use carbide_core::{CellError, CellValue, EngineKind, SheetId};
 use carbide_tess::hex::HexCoord;
 use carbide_tess::triangle::TriCoord;
 use eframe::egui;
@@ -10,8 +10,9 @@ use crate::conditional::Condition;
 use crate::format::{self, Borders, CellFormat, HAlign};
 use crate::grid;
 use crate::keymap::Dir;
+use crate::widget::{WidgetKind, Widgets};
 
-use super::types::{FormatEdit, HexFormatEdit};
+use super::types::FormatEdit;
 use super::{COLS, HEX_VIEW_RADIUS, ROWS, TRIANGLE_RADIUS};
 
 /// Draw a square cell's value with its formatting — colour, alignment,
@@ -463,6 +464,48 @@ pub(super) fn dedup_targets(
     out
 }
 
+/// Collapse duplicate `(sheet, address)` pairs in a multi-sheet edit batch
+/// so one atomic undo step never holds two edits for the same cell — the
+/// last write wins (e.g. a paste overwriting a just-cleared cut origin).
+pub(super) fn dedup_sheet_targets(
+    targets: Vec<(SheetId, String, Option<String>)>,
+) -> Vec<(SheetId, String, Option<String>)> {
+    let mut out: Vec<(SheetId, String, Option<String>)> = Vec::new();
+    for (sheet, addr, after) in targets {
+        if let Some(slot) = out.iter_mut().find(|(s, a, _)| *s == sheet && *a == addr) {
+            slot.2 = after;
+        } else {
+            out.push((sheet, addr, after));
+        }
+    }
+    out
+}
+
+/// Toggle `kind` across every coordinate in `cells` on any lattice's
+/// [`Widgets<K>`] map: if every cell already has a widget with the same
+/// [`WidgetKind`] discriminant, clear them all; otherwise set every cell to
+/// `kind`. Discriminant matching keeps this safe even for parameterized
+/// variants (`Slider`, `ProgressBar`).
+pub(super) fn toggle_widget_kind<K: Eq + std::hash::Hash + Copy>(
+    widgets: &mut Widgets<K>,
+    cells: &[K],
+    kind: WidgetKind,
+) {
+    if cells.is_empty() {
+        return;
+    }
+    let target_disc = std::mem::discriminant(&kind);
+    let all_on = cells.iter().all(|&c| {
+        widgets
+            .kind(c)
+            .is_some_and(|k| std::mem::discriminant(&k) == target_disc)
+    });
+    let next = (!all_on).then_some(kind);
+    for &cell in cells {
+        widgets.set(cell, next);
+    }
+}
+
 /// The new state for a range toggle: off when every cell already has the
 /// flag, on otherwise — Excel's bold/italic-over-a-range rule.
 pub(super) fn toggle_target(mut currently_on: impl Iterator<Item = bool>) -> bool {
@@ -471,7 +514,7 @@ pub(super) fn toggle_target(mut currently_on: impl Iterator<Item = bool>) -> boo
 
 /// Merge two consecutive format-edit batches over the same cells into
 /// one — the earliest `before` and the latest `after` per cell, so a
-/// coalesced gesture undoes to its true starting state.
+/// coalesced gesture undoes to its true starting state across any lattice.
 pub(super) fn merge_format_edits(prev: Vec<FormatEdit>, new: Vec<FormatEdit>) -> Vec<FormatEdit> {
     new.into_iter()
         .map(|n| {
@@ -489,25 +532,78 @@ pub(super) fn merge_format_edits(prev: Vec<FormatEdit>, new: Vec<FormatEdit>) ->
         .collect()
 }
 
-/// Merge two consecutive hex format-edit batches over the same cells —
-/// earliest `before`, latest `after` per cell. The hex twin of
-/// [`merge_format_edits`].
-pub(super) fn merge_hex_format_edits(
-    prev: Vec<HexFormatEdit>,
-    new: Vec<HexFormatEdit>,
-) -> Vec<HexFormatEdit> {
-    new.into_iter()
-        .map(|n| {
-            let before = prev
-                .iter()
-                .find(|p| p.cell == n.cell)
-                .map(|p| p.before.clone())
-                .unwrap_or_else(|| n.before.clone());
-            HexFormatEdit {
-                cell: n.cell,
-                before,
-                after: n.after,
-            }
-        })
-        .collect()
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dedup_sheet_targets_keeps_last_write_per_sheet_and_preserves_distinct_sheets() {
+        let s1 = SheetId(1);
+        let s2 = SheetId(2);
+        let targets = vec![
+            (s1, "A1".to_string(), None),
+            (s2, "A1".to_string(), Some("10".to_string())),
+            (s1, "A1".to_string(), Some("override".to_string())),
+        ];
+        let out = dedup_sheet_targets(targets);
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0], (s1, "A1".to_string(), Some("override".to_string())));
+        assert_eq!(out[1], (s2, "A1".to_string(), Some("10".to_string())));
+    }
+
+    #[test]
+    fn toggle_widget_kind_handles_all_off_mixed_and_all_on_across_lattices() {
+        use crate::selection::Selection;
+        use carbide_tess::voronoi::VoronoiCoord;
+
+        // Square: all-off -> all-on -> all-off, plus discriminant match on Slider.
+        let mut sq: Widgets<(u32, u32)> = Widgets::default();
+        let sq_cells = [(0, 0), (1, 0)];
+        toggle_widget_kind(&mut sq, &sq_cells, WidgetKind::Toggle);
+        assert!(sq.is_toggle((0, 0)) && sq.is_toggle((1, 0)));
+        toggle_widget_kind(&mut sq, &sq_cells, WidgetKind::Toggle);
+        assert!(!sq.is_widget((0, 0)) && !sq.is_widget((1, 0)));
+
+        // Mixed Slider range (custom range + default range): all share the
+        // Slider discriminant so toggling clears both cleanly.
+        sq.set_slider((0, 0), 0.0, 500.0);
+        sq.set_slider((1, 0), 0.0, 100.0);
+        toggle_widget_kind(
+            &mut sq,
+            &sq_cells,
+            WidgetKind::Slider {
+                min: 0.0,
+                max: 100.0,
+            },
+        );
+        assert!(!sq.is_widget((0, 0)) && !sq.is_widget((1, 0)));
+
+        // Hex & Triangle Button toggles.
+        let mut hex_w: Widgets<HexCoord> = Widgets::default();
+        let h_cells = [HexCoord::new(0, 0), HexCoord::new(1, -1)];
+        hex_w.set_button(h_cells[0], true); // mixed: only 1 of 2 on -> turns all on
+        toggle_widget_kind(&mut hex_w, &h_cells, WidgetKind::Button);
+        assert!(hex_w.is_button(h_cells[0]) && hex_w.is_button(h_cells[1]));
+
+        let mut tri_w: Widgets<TriCoord> = Widgets::default();
+        let t_cells = [TriCoord::new(0, 0), TriCoord::new(2, 1)];
+        toggle_widget_kind(&mut tri_w, &t_cells, WidgetKind::Toggle);
+        assert!(tri_w.is_toggle(t_cells[0]) && tri_w.is_toggle(t_cells[1]));
+
+        // Voronoi marquee Selection.extra (non-contiguous cells, deduped).
+        let mut sel = Selection::single(VoronoiCoord(1));
+        sel.extra
+            .extend([VoronoiCoord(1), VoronoiCoord(4), VoronoiCoord(6)]);
+        let vor_cells = sel.cells();
+        assert_eq!(
+            vor_cells,
+            vec![VoronoiCoord(1), VoronoiCoord(4), VoronoiCoord(6)]
+        );
+        let mut vor_w: Widgets<VoronoiCoord> = Widgets::default();
+        vor_w.set_toggle(VoronoiCoord(4), true); // mixed
+        toggle_widget_kind(&mut vor_w, &vor_cells, WidgetKind::Toggle);
+        assert!(vor_cells.iter().all(|&c| vor_w.is_toggle(c)));
+        toggle_widget_kind(&mut vor_w, &vor_cells, WidgetKind::Toggle);
+        assert!(vor_cells.iter().all(|&c| !vor_w.is_widget(c)));
+    }
 }

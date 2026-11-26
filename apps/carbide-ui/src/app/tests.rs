@@ -755,8 +755,7 @@ fn toggle_target_turns_off_only_when_every_cell_is_on() {
 }
 
 #[test]
-fn merge_format_edits_keeps_oldest_before_and_newest_after() {
-    let cell = (1, 1);
+fn merge_format_edits_keeps_oldest_before_and_newest_after_across_all_lattices() {
     let red = CellFormat {
         text_color: Some(egui::Color32::RED),
         ..CellFormat::default()
@@ -765,49 +764,30 @@ fn merge_format_edits_keeps_oldest_before_and_newest_after() {
         text_color: Some(egui::Color32::BLUE),
         ..CellFormat::default()
     };
-    // Frame 1 changed default -> red; frame 2 changed red -> blue.
-    let prev = vec![FormatEdit {
-        cell,
-        before: CellFormat::default(),
-        after: red.clone(),
-    }];
-    let new = vec![FormatEdit {
-        cell,
-        before: red,
-        after: blue.clone(),
-    }];
-    let merged = merge_format_edits(prev, new);
-    assert_eq!(merged.len(), 1);
-    // The merged edit spans the whole gesture: default -> blue.
-    assert_eq!(merged[0].before, CellFormat::default());
-    assert_eq!(merged[0].after, blue);
-}
-
-#[test]
-fn merge_hex_format_edits_keeps_oldest_before_and_newest_after() {
-    let cell = HexCoord::new(2, -1);
-    let red = CellFormat {
-        text_color: Some(egui::Color32::RED),
-        ..CellFormat::default()
-    };
-    let blue = CellFormat {
-        text_color: Some(egui::Color32::BLUE),
-        ..CellFormat::default()
-    };
-    let prev = vec![HexFormatEdit {
-        cell,
-        before: CellFormat::default(),
-        after: red.clone(),
-    }];
-    let new = vec![HexFormatEdit {
-        cell,
-        before: red,
-        after: blue.clone(),
-    }];
-    let merged = merge_hex_format_edits(prev, new);
-    assert_eq!(merged.len(), 1);
-    assert_eq!(merged[0].before, CellFormat::default());
-    assert_eq!(merged[0].after, blue);
+    for cell in [
+        CellId::Square((1, 1)),
+        CellId::Hex(HexCoord::new(2, -1)),
+        CellId::Triangle(TriCoord::new(0, 1)),
+        CellId::Voronoi(VoronoiCoord(3)),
+    ] {
+        // Frame 1 changed default -> red; frame 2 changed red -> blue.
+        let prev = vec![FormatEdit {
+            cell,
+            before: CellFormat::default(),
+            after: red.clone(),
+        }];
+        let new = vec![FormatEdit {
+            cell,
+            before: red.clone(),
+            after: blue.clone(),
+        }];
+        let merged = merge_format_edits(prev, new);
+        assert_eq!(merged.len(), 1);
+        assert_eq!(merged[0].cell, cell);
+        // The merged edit spans the whole gesture: default -> blue.
+        assert_eq!(merged[0].before, CellFormat::default());
+        assert_eq!(merged[0].after, blue);
+    }
 }
 
 #[test]

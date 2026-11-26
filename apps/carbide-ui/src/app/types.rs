@@ -286,27 +286,18 @@ pub(super) struct CellEdit {
     pub(super) after: Option<String>,
 }
 
-/// One square cell's format before and after a change.
+/// One cell's format before and after a change, on any lattice.
 #[derive(Debug, Clone)]
 pub(super) struct FormatEdit {
-    pub(super) cell: (u32, u32),
-    pub(super) before: CellFormat,
-    pub(super) after: CellFormat,
-}
-
-/// One hex cell's format before and after a change.
-#[derive(Debug, Clone)]
-pub(super) struct HexFormatEdit {
-    pub(super) cell: HexCoord,
+    pub(super) cell: CellId,
     pub(super) before: CellFormat,
     pub(super) after: CellFormat,
 }
 
 /// An undoable action — a batch of cell-content edits, or a batch of
-/// square or hex formatting edits. One `Action` is one undo step.
+/// formatting edits on any lattice. One `Action` is one undo step.
 #[derive(Debug, Clone)]
 pub(super) enum Action {
     Cells(Vec<CellEdit>),
     Formats(Vec<FormatEdit>),
-    HexFormats(Vec<HexFormatEdit>),
 }

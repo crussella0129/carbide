@@ -50,6 +50,10 @@ pub struct UiSnapshot {
     pub square_formats: FormatMap<(u32, u32)>,
     pub hex_formats: FormatMap<HexCoord>,
     pub triangle_formats: FormatMap<TriCoord>,
+    /// Voronoi-sheet cell formatting (Sprint 14). Pre-Sprint-14 v2
+    /// snapshots default to empty here.
+    #[serde(default)]
+    pub voronoi_formats: FormatMap<carbide_tess::voronoi::VoronoiCoord>,
     #[serde(alias = "widgets")]
     pub square_widgets: Widgets<(u32, u32)>,
     pub hex_widgets: Widgets<HexCoord>,
@@ -66,6 +70,10 @@ pub struct UiSnapshot {
     pub hex_notes: HashMap<HexCoord, String>,
     #[serde(with = "vec_pair::tri_notes")]
     pub triangle_notes: HashMap<TriCoord, String>,
+    /// Voronoi-sheet cell notes (Sprint 14). Pre-Sprint-14 v2 snapshots
+    /// default to empty here.
+    #[serde(default, with = "vec_pair::voronoi_notes")]
+    pub voronoi_notes: HashMap<carbide_tess::voronoi::VoronoiCoord, String>,
     pub conditional_rules: Vec<Rule>,
     pub column_widths: HashMap<u32, f32>,
     pub row_heights: HashMap<u32, f32>,
@@ -104,6 +112,7 @@ mod vec_pair {
     vec_pair_for!(square_notes, (u32, u32));
     vec_pair_for!(hex_notes, carbide_tess::hex::HexCoord);
     vec_pair_for!(tri_notes, carbide_tess::triangle::TriCoord);
+    vec_pair_for!(voronoi_notes, carbide_tess::voronoi::VoronoiCoord);
 }
 
 /// JSON-encode a snapshot into the opaque store-side blob. Falls back to
@@ -197,6 +206,11 @@ mod tests {
             f.bold = true;
             f.text_color = Some(Color32::from_rgba_unmultiplied(10, 20, 30, 255));
         });
+        let mut voronoi_formats: FormatMap<carbide_tess::voronoi::VoronoiCoord> = FormatMap::new();
+        voronoi_formats.update(carbide_tess::voronoi::VoronoiCoord(2), |f| {
+            f.italic = true;
+            f.fill = Some(Color32::from_rgba_unmultiplied(120, 180, 220, 255));
+        });
 
         let snap = UiSnapshot {
             active_sheet: ActiveSheetTag::Hex,
@@ -205,6 +219,7 @@ mod tests {
             square_formats,
             hex_formats: FormatMap::default(),
             triangle_formats: FormatMap::default(),
+            voronoi_formats,
             square_widgets: sq_widgets,
             hex_widgets,
             triangle_widgets,
@@ -214,6 +229,12 @@ mod tests {
                 .collect(),
             hex_notes: HashMap::new(),
             triangle_notes: HashMap::new(),
+            voronoi_notes: [(
+                carbide_tess::voronoi::VoronoiCoord(4),
+                "voronoi note".to_string(),
+            )]
+            .into_iter()
+            .collect(),
             conditional_rules: vec![Rule {
                 condition: Condition::GreaterThan(50.0),
                 format: CellFormat {
@@ -239,9 +260,26 @@ mod tests {
             .voronoi_widgets
             .is_toggle(carbide_tess::voronoi::VoronoiCoord(5)));
         assert!(back.square_formats.get((0, 0)).bold);
+        assert!(
+            back.voronoi_formats
+                .get(carbide_tess::voronoi::VoronoiCoord(2))
+                .italic
+        );
+        assert_eq!(
+            back.voronoi_formats
+                .get(carbide_tess::voronoi::VoronoiCoord(2))
+                .fill,
+            Some(Color32::from_rgba_unmultiplied(120, 180, 220, 255))
+        );
         assert_eq!(
             back.square_notes.get(&(3, 3)).map(String::as_str),
             Some("remember this")
+        );
+        assert_eq!(
+            back.voronoi_notes
+                .get(&carbide_tess::voronoi::VoronoiCoord(4))
+                .map(String::as_str),
+            Some("voronoi note")
         );
         assert_eq!(back.conditional_rules.len(), 1);
         assert_eq!(back.column_widths.get(&0), Some(&90.0));
@@ -272,6 +310,35 @@ mod tests {
         let snap: UiSnapshot = serde_json::from_value(v145_json).unwrap();
         assert!(snap.square_widgets.is_toggle((1, 1)));
         assert!(snap.hex_widgets.is_empty());
+    }
+
+    #[test]
+    fn legacy_v2_snapshot_without_voronoi_formats_or_notes_deserializes_with_defaults() {
+        // Strict direct serde decode (not masked by ui_state_to_snapshot's
+        // unwrap_or_default fallback) proves older v2 snapshots lacking
+        // `voronoi_formats` and `voronoi_notes` preserve existing fields
+        // and default empty.
+        let legacy_json = serde_json::json!({
+            "active_sheet": "Triangle",
+            "stage_mode": true,
+            "dark_mode": false,
+            "square_notes": [[[2, 3], "legacy note"]]
+        });
+        let snap: UiSnapshot = serde_json::from_value(legacy_json).unwrap();
+        assert_eq!(snap.active_sheet, ActiveSheetTag::Triangle);
+        assert!(snap.stage_mode);
+        assert!(!snap.dark_mode);
+        assert_eq!(
+            snap.square_notes.get(&(2, 3)).map(String::as_str),
+            Some("legacy note")
+        );
+        assert_eq!(snap.voronoi_formats.iter().count(), 0);
+        assert_eq!(
+            snap.voronoi_formats
+                .get(carbide_tess::voronoi::VoronoiCoord(0)),
+            CellFormat::default()
+        );
+        assert!(snap.voronoi_notes.is_empty());
     }
 
     #[test]
