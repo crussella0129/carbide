@@ -229,4 +229,4 @@
 - **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
 - **Completed:** 2026-11-26T17:12:30Z
 - **Files modified:** .github/workflows/ci.yml
-- **Commit:** PENDING
+- **Commit:** `6d7da0139608a8dd1f497bb7ab3530892fa8f739`
