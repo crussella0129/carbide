@@ -83,7 +83,7 @@ impl CarbideApp {
             wasm_bindgen_futures::spawn_local(async move {
                 if let Some(handle) = rfd::AsyncFileDialog::new()
                     .set_file_name("workbook.crbd")
-                    .add_filter("Carbide", &["tscl"])
+                    .add_filter("Carbide", &["crbd"])
                     .save_file()
                     .await
                 {
@@ -121,7 +121,7 @@ impl CarbideApp {
             let slot = self.pending_open_bytes.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 if let Some(handle) = rfd::AsyncFileDialog::new()
-                    .add_filter("Carbide", &["tscl"])
+                    .add_filter("Carbide", &["crbd", "tscl"])
                     .pick_file()
                     .await
                 {

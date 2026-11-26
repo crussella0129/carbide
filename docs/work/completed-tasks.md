@@ -289,3 +289,11 @@
 - **Completed:** 2026-11-26T18:38:30Z
 - **Files modified:** apps/carbide-ui/src/clipboard.rs, apps/carbide-ui/src/app/edit.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/voronoi_helpers.rs
 - **Commit:** `0705c9e15806ef396991b4937cf9e22bc4697952`
+
+
+## T-004 (sprint 14)
+- **Description:** Extract discriminant-safe `toggle_widget_kind` helper across Square, Hex, Triangle, and Voronoi (Toggle + Button, marquee-aware `Selection.extra` on Voronoi; Slider/ProgressBar remain Square-only per ADR-006), fix wasm32 `.crbd`/`.tscl` dialog filters in `io.rs`, and add unit test coverage (315/315 UI tests green, native + wasm32 clean, max file 819 lines).
+- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
+- **Completed:** 2026-11-26T18:40:20Z
+- **Files modified:** apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/io.rs
+- **Commit:** PENDING

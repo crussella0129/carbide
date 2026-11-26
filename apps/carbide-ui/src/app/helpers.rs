@@ -10,6 +10,7 @@ use crate::conditional::Condition;
 use crate::format::{self, Borders, CellFormat, HAlign};
 use crate::grid;
 use crate::keymap::Dir;
+use crate::widget::{WidgetKind, Widgets};
 
 use super::types::FormatEdit;
 use super::{COLS, HEX_VIEW_RADIUS, ROWS, TRIANGLE_RADIUS};
@@ -480,6 +481,31 @@ pub(super) fn dedup_sheet_targets(
     out
 }
 
+/// Toggle `kind` across every coordinate in `cells` on any lattice's
+/// [`Widgets<K>`] map: if every cell already has a widget with the same
+/// [`WidgetKind`] discriminant, clear them all; otherwise set every cell to
+/// `kind`. Discriminant matching keeps this safe even for parameterized
+/// variants (`Slider`, `ProgressBar`).
+pub(super) fn toggle_widget_kind<K: Eq + std::hash::Hash + Copy>(
+    widgets: &mut Widgets<K>,
+    cells: &[K],
+    kind: WidgetKind,
+) {
+    if cells.is_empty() {
+        return;
+    }
+    let target_disc = std::mem::discriminant(&kind);
+    let all_on = cells.iter().all(|&c| {
+        widgets
+            .kind(c)
+            .is_some_and(|k| std::mem::discriminant(&k) == target_disc)
+    });
+    let next = (!all_on).then_some(kind);
+    for &cell in cells {
+        widgets.set(cell, next);
+    }
+}
+
 /// The new state for a range toggle: off when every cell already has the
 /// flag, on otherwise — Excel's bold/italic-over-a-range rule.
 pub(super) fn toggle_target(mut currently_on: impl Iterator<Item = bool>) -> bool {
@@ -523,5 +549,61 @@ mod tests {
         assert_eq!(out.len(), 2);
         assert_eq!(out[0], (s1, "A1".to_string(), Some("override".to_string())));
         assert_eq!(out[1], (s2, "A1".to_string(), Some("10".to_string())));
+    }
+
+    #[test]
+    fn toggle_widget_kind_handles_all_off_mixed_and_all_on_across_lattices() {
+        use crate::selection::Selection;
+        use carbide_tess::voronoi::VoronoiCoord;
+
+        // Square: all-off -> all-on -> all-off, plus discriminant match on Slider.
+        let mut sq: Widgets<(u32, u32)> = Widgets::default();
+        let sq_cells = [(0, 0), (1, 0)];
+        toggle_widget_kind(&mut sq, &sq_cells, WidgetKind::Toggle);
+        assert!(sq.is_toggle((0, 0)) && sq.is_toggle((1, 0)));
+        toggle_widget_kind(&mut sq, &sq_cells, WidgetKind::Toggle);
+        assert!(!sq.is_widget((0, 0)) && !sq.is_widget((1, 0)));
+
+        // Mixed Slider range (custom range + default range): all share the
+        // Slider discriminant so toggling clears both cleanly.
+        sq.set_slider((0, 0), 0.0, 500.0);
+        sq.set_slider((1, 0), 0.0, 100.0);
+        toggle_widget_kind(
+            &mut sq,
+            &sq_cells,
+            WidgetKind::Slider {
+                min: 0.0,
+                max: 100.0,
+            },
+        );
+        assert!(!sq.is_widget((0, 0)) && !sq.is_widget((1, 0)));
+
+        // Hex & Triangle Button toggles.
+        let mut hex_w: Widgets<HexCoord> = Widgets::default();
+        let h_cells = [HexCoord::new(0, 0), HexCoord::new(1, -1)];
+        hex_w.set_button(h_cells[0], true); // mixed: only 1 of 2 on -> turns all on
+        toggle_widget_kind(&mut hex_w, &h_cells, WidgetKind::Button);
+        assert!(hex_w.is_button(h_cells[0]) && hex_w.is_button(h_cells[1]));
+
+        let mut tri_w: Widgets<TriCoord> = Widgets::default();
+        let t_cells = [TriCoord::new(0, 0), TriCoord::new(2, 1)];
+        toggle_widget_kind(&mut tri_w, &t_cells, WidgetKind::Toggle);
+        assert!(tri_w.is_toggle(t_cells[0]) && tri_w.is_toggle(t_cells[1]));
+
+        // Voronoi marquee Selection.extra (non-contiguous cells, deduped).
+        let mut sel = Selection::single(VoronoiCoord(1));
+        sel.extra
+            .extend([VoronoiCoord(1), VoronoiCoord(4), VoronoiCoord(6)]);
+        let vor_cells = sel.cells();
+        assert_eq!(
+            vor_cells,
+            vec![VoronoiCoord(1), VoronoiCoord(4), VoronoiCoord(6)]
+        );
+        let mut vor_w: Widgets<VoronoiCoord> = Widgets::default();
+        vor_w.set_toggle(VoronoiCoord(4), true); // mixed
+        toggle_widget_kind(&mut vor_w, &vor_cells, WidgetKind::Toggle);
+        assert!(vor_cells.iter().all(|&c| vor_w.is_toggle(c)));
+        toggle_widget_kind(&mut vor_w, &vor_cells, WidgetKind::Toggle);
+        assert!(vor_cells.iter().all(|&c| !vor_w.is_widget(c)));
     }
 }
