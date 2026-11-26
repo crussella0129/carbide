@@ -21,11 +21,10 @@ use super::CarbideApp;
 impl CarbideApp {
     /// Render the Voronoi sheet — Demo C from the launch brief. Eight
     /// (or however many seeds the lattice carries) cell polygons fill
-    /// the central panel; each cell displays its evaluated value. Click
-    /// to select; F2 or double-click to edit. v150 ships read-only-ish
-    /// interaction (single-cell selection + formula-bar edit); widgets,
-    /// formatting, range selection, fill drag, and copy/paste on
-    /// Voronoi all wait for v151.
+    /// the central panel; each cell displays its evaluated value with
+    /// full cell formatting, note markers/tooltips, right-click context
+    /// menu, marquee multi-cell selection (`Selection.extra`), Toggle/
+    /// Button widgets, seed-handle dragging, and copy/cut/paste parity.
     pub(super) fn draw_voronoi_grid(&mut self, ui: &mut egui::Ui) {
         let size = ui.available_size();
         let (response, painter) = ui.allocate_painter(size, egui::Sense::click_and_drag());

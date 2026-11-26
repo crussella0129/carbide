@@ -9,9 +9,10 @@
 //! their result when they cross a lattice boundary.
 //!
 //! **Cut is part of this same object** — not a separate per-sheet field.
-//! A cut is just a captured block that also remembers its origin; the
-//! next paste clears that origin (when it lands on the cut's own
-//! lattice) and the cut is consumed.
+//! A cut is just a captured block that also remembers its origin (grid
+//! corner or explicit Voronoi cell list); the next paste clears that
+//! origin atomically — whether on the same sheet or across lattices —
+//! and the cut is consumed.
 //!
 //! No egui and no engine here, so the whole model is `cargo test`-able.
 

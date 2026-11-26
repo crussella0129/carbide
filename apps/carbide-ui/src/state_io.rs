@@ -332,6 +332,7 @@ mod tests {
             snap.square_notes.get(&(2, 3)).map(String::as_str),
             Some("legacy note")
         );
+        assert_eq!(snap.voronoi_formats.iter().count(), 0);
         assert_eq!(
             snap.voronoi_formats
                 .get(carbide_tess::voronoi::VoronoiCoord(0)),
