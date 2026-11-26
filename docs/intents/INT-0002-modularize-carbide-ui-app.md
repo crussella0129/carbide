@@ -2,7 +2,7 @@
 
 <!-- sprint-loop-intent-v2 -->
 - **Intent ID:** INT-0002
-- **State:** planned
+- **State:** active
 - **Work evidence:** [Sprint 13 build plan](../sprints/s13/sprint-plans/build-plan.md), [Sprint 13 test plan](../sprints/s13/sprint-plans/test-plan.md), [T-001..T-004](../work/tasks.md)
 - **Completion evidence:** none
 - **Code evidence:** none
@@ -31,3 +31,4 @@ Decompose `apps/carbide-ui/src/app.rs` (currently 7,433 lines) into cohesive sub
 ## Transition history
 - 2026-11-26: created as `proposed` during Sprint 12 6-month project assessment.
 - 2026-11-26: transitioned `proposed` → `planned` with Sprint 13 build/test plans and tasks `T-001`–`T-004`.
+- 2026-11-26: transitioned `planned` → `active` at Sprint 13 Build Phase start.
