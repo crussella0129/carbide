@@ -1,0 +1,172 @@
+# Legacy Sprint Loops Migration Provenance
+
+<!-- sprint-loop-migration-v2 -->
+
+- **Book schema version:** 2
+- **Migrated at:** 2026-11-26T16:59:53Z
+- **Authority:** Historical provenance only. The `docs/` Book is the sole writable Sprint Loops authority.
+
+## Path mappings
+
+- `sprints/` -> `docs/sprints/`
+- `agent-tasks/agent-tasks.md` -> `docs/work/tasks.md`
+- `agent-tasks/completed-tasks.md` -> `docs/work/completed-tasks.md`
+- Other `agent-tasks/` content -> the same relative path under `docs/work/`
+- `confidence.txt` -> `docs/work/confidence.txt`
+- `decisions.md` -> `docs/history/decisions-legacy.md` (non-authoritative history)
+
+## Content inventory
+
+Each indented row is `type<TAB>sha256-or--<TAB>legacy-path<TAB>Book-path`.
+
+    D	-	agent-tasks	docs/work
+    D	-	sprints	docs/sprints
+    D	-	sprints/s0	docs/sprints/s0
+    D	-	sprints/s0/sprint-plans	docs/sprints/s0/sprint-plans
+    D	-	sprints/s0/sprint-research	docs/sprints/s0/sprint-research
+    D	-	sprints/s0/sprint-tests	docs/sprints/s0/sprint-tests
+    D	-	sprints/s1	docs/sprints/s1
+    D	-	sprints/s1/sprint-plans	docs/sprints/s1/sprint-plans
+    D	-	sprints/s1/sprint-research	docs/sprints/s1/sprint-research
+    D	-	sprints/s1/sprint-tests	docs/sprints/s1/sprint-tests
+    D	-	sprints/s10	docs/sprints/s10
+    D	-	sprints/s10/sprint-plans	docs/sprints/s10/sprint-plans
+    D	-	sprints/s10/sprint-research	docs/sprints/s10/sprint-research
+    D	-	sprints/s10/sprint-tests	docs/sprints/s10/sprint-tests
+    D	-	sprints/s11	docs/sprints/s11
+    D	-	sprints/s11/sprint-plans	docs/sprints/s11/sprint-plans
+    D	-	sprints/s11/sprint-research	docs/sprints/s11/sprint-research
+    D	-	sprints/s11/sprint-tests	docs/sprints/s11/sprint-tests
+    D	-	sprints/s2	docs/sprints/s2
+    D	-	sprints/s2/sprint-plans	docs/sprints/s2/sprint-plans
+    D	-	sprints/s2/sprint-research	docs/sprints/s2/sprint-research
+    D	-	sprints/s2/sprint-tests	docs/sprints/s2/sprint-tests
+    D	-	sprints/s3	docs/sprints/s3
+    D	-	sprints/s3/sprint-plans	docs/sprints/s3/sprint-plans
+    D	-	sprints/s3/sprint-research	docs/sprints/s3/sprint-research
+    D	-	sprints/s3/sprint-tests	docs/sprints/s3/sprint-tests
+    D	-	sprints/s4	docs/sprints/s4
+    D	-	sprints/s4/sprint-plans	docs/sprints/s4/sprint-plans
+    D	-	sprints/s4/sprint-research	docs/sprints/s4/sprint-research
+    D	-	sprints/s4/sprint-tests	docs/sprints/s4/sprint-tests
+    D	-	sprints/s5	docs/sprints/s5
+    D	-	sprints/s5/sprint-plans	docs/sprints/s5/sprint-plans
+    D	-	sprints/s5/sprint-research	docs/sprints/s5/sprint-research
+    D	-	sprints/s5/sprint-tests	docs/sprints/s5/sprint-tests
+    D	-	sprints/s6	docs/sprints/s6
+    D	-	sprints/s6/sprint-plans	docs/sprints/s6/sprint-plans
+    D	-	sprints/s6/sprint-research	docs/sprints/s6/sprint-research
+    D	-	sprints/s6/sprint-tests	docs/sprints/s6/sprint-tests
+    D	-	sprints/s7	docs/sprints/s7
+    D	-	sprints/s7/sprint-plans	docs/sprints/s7/sprint-plans
+    D	-	sprints/s7/sprint-research	docs/sprints/s7/sprint-research
+    D	-	sprints/s7/sprint-tests	docs/sprints/s7/sprint-tests
+    D	-	sprints/s8	docs/sprints/s8
+    D	-	sprints/s8/sprint-plans	docs/sprints/s8/sprint-plans
+    D	-	sprints/s8/sprint-research	docs/sprints/s8/sprint-research
+    D	-	sprints/s8/sprint-tests	docs/sprints/s8/sprint-tests
+    D	-	sprints/s9	docs/sprints/s9
+    D	-	sprints/s9/sprint-plans	docs/sprints/s9/sprint-plans
+    D	-	sprints/s9/sprint-research	docs/sprints/s9/sprint-research
+    D	-	sprints/s9/sprint-tests	docs/sprints/s9/sprint-tests
+    F	02863b5aced4c3f978b08705de8dd43bb9805cb6dc325140f407d7731bb6b89b	sprints/s9/sprint-meta.md	docs/sprints/s9/sprint-meta.md
+    F	058c057cfcfb7e57a1d1854d2ab63ed397c62b51f561ed394e098c0b5e35850d	sprints/s2/sprint-tests/test-report.md	docs/sprints/s2/sprint-tests/test-report.md
+    F	06b1dfc09e68f862c5849f1537b9935b4ec46703e489fbeae691ffa2cd9da78e	sprints/s8/sprint-tests/integration-tests.md	docs/sprints/s8/sprint-tests/integration-tests.md
+    F	0db31e61d01e9f008a11cd789c77ba44c1f4c4248175a461c5f2c6edaf843262	sprints/s9/sprint-plans/build-plan.md	docs/sprints/s9/sprint-plans/build-plan.md
+    F	0f35acde2f6d92f2f1ca1615b67e663027bcdb52302ecaa5588322a61dfae756	sprints/s8/sprint-research/research-report.md	docs/sprints/s8/sprint-research/research-report.md
+    F	100867b3096b16a62818960445ad8903c9198fd3a70c1cfabfcd520149c65187	sprints/s8/sprint-plans/build-plan.md	docs/sprints/s8/sprint-plans/build-plan.md
+    F	143e51528edc90ff0fb71a9d40202c98872faad9fd83a35b428ffe93a455d6d5	sprints/s10/sprint-tests/unit-tests.md	docs/sprints/s10/sprint-tests/unit-tests.md
+    F	150af60d5facc3cb11f19fc1fd66ac717589e6466fcaee5ad6f697126724f172	sprints/s3/sprint-tests/test-report.md	docs/sprints/s3/sprint-tests/test-report.md
+    F	150c1e1cd519699f46b1187cb2b96afb07b1db5f44fe9112331eb910f307a563	sprints/s2/sprint-plans/build-plan.md	docs/sprints/s2/sprint-plans/build-plan.md
+    F	1ae3e2a5e9459ef67603740d7b7e9b8081765785fbbc451a91e43669f4fed7fb	sprints/s6/sprint-tests/unit-tests.md	docs/sprints/s6/sprint-tests/unit-tests.md
+    F	242a3ef42feac33f2217e313dc20eaea8f05ad766cf3a95bd9140225a0499f53	sprints/s5/sprint-tests/unit-tests.md	docs/sprints/s5/sprint-tests/unit-tests.md
+    F	2513427b3fe279f5681dfc07dbc28df9422adec7066bfd81a9d871c740bbfb62	sprints/s0/sprint-meta.md	docs/sprints/s0/sprint-meta.md
+    F	255513bb5df5fcb61e95a60b2ebc840e78cb2e5cc27c035945b6fd5f73cf630a	sprints/s6/sprint-meta.md	docs/sprints/s6/sprint-meta.md
+    F	2662ecbd2ef3d7635e0bfc97f6f1808e486345ab9e8f82719540c6e234f5d759	sprints/s1/sprint-research/research-report.md	docs/sprints/s1/sprint-research/research-report.md
+    F	2ce59ad5c3b1db9de42994f96ef904ba604aa68b2b173578d2b19f3ee73c7c7e	sprints/s0/sprint-tests/e2e-tests.md	docs/sprints/s0/sprint-tests/e2e-tests.md
+    F	2e84566c203fd7dec2b58f04d5c2c03e9d81f3c1ac0f6ce8f2e1778d15822485	sprints/s11/sprint-meta.md	docs/sprints/s11/sprint-meta.md
+    F	2f4ea754f378341263847066ca4a828361b357f3114f4dfcb3cd73e48fae8032	sprints/s5/sprint-tests/test-report.md	docs/sprints/s5/sprint-tests/test-report.md
+    F	32ba982cbe26ac212f61d6f4f4fe6467170565778ad60b56ee05599e8eeab75c	sprints/s2/sprint-plans/test-plan.md	docs/sprints/s2/sprint-plans/test-plan.md
+    F	32f07795a26dc917b72f053cf62b37f84809c03dc67a37c39947c7cef959340b	sprints/s0/sprint-tests/unit-tests.md	docs/sprints/s0/sprint-tests/unit-tests.md
+    F	3474551ed29bc77d36dd87c98b624064a7f2c1efb4130cfef0c19131ba5211ae	sprints/s0/sprint-research/research-report.md	docs/sprints/s0/sprint-research/research-report.md
+    F	3e22c667fd6062cdd4b16f11421f8b5d449cbb4fda2a08498b43456c45623e13	sprints/s1/sprint-plans/test-plan.md	docs/sprints/s1/sprint-plans/test-plan.md
+    F	3efacf7aca988bf99ad81900696eb1b9e24a0e24d271f7ba7a189e6180b35aed	sprints/s2/sprint-research/research-report.md	docs/sprints/s2/sprint-research/research-report.md
+    F	459367d2546d4c022cf0d989d9a07f105a81be393ef2b15a6ff92ae8186d09a8	sprints/s2/sprint-tests/unit-tests.md	docs/sprints/s2/sprint-tests/unit-tests.md
+    F	4fb984cc242251e740f0d0a7af3d3255582e8eaa290d5730f0faf65285a77e24	sprints/s3/sprint-tests/unit-tests.md	docs/sprints/s3/sprint-tests/unit-tests.md
+    F	5119d8fb058ffa2a3194b4fae61812615eb88f546351b375bdc0602f6905e393	sprints/s5/sprint-tests/integration-tests.md	docs/sprints/s5/sprint-tests/integration-tests.md
+    F	535ea91479c4b9c51c40b892a5540726fa46d1721e72b3915b7b29ed43e08e4c	sprints/s6/sprint-research/research-report.md	docs/sprints/s6/sprint-research/research-report.md
+    F	54011be8d37169defa52a4dcd3d9872c3367e4cd50d3699a2926112da82dbbff	sprints/s0/sprint-tests/integration-tests.md	docs/sprints/s0/sprint-tests/integration-tests.md
+    F	55048696ef0ae98712cea50a55edab2b5b54af2c167736a4ce2a9a3efebb885a	sprints/s7/sprint-meta.md	docs/sprints/s7/sprint-meta.md
+    F	5597648870ad08834627f59eed65c7dea9db63f802e9f68c3a5e64fde498cb66	sprints/s5/sprint-plans/build-plan.md	docs/sprints/s5/sprint-plans/build-plan.md
+    F	5717e7c840171019a4eeab5b79a7f894a4986eaff93d04ec5b12c9a189f594bf	confidence.txt	docs/work/confidence.txt
+    F	59639503ad011c8b0718aca7b738cec9b6c981efaf0fbbd2162f208e6abf15a6	sprints/s9/sprint-tests/e2e-tests.md	docs/sprints/s9/sprint-tests/e2e-tests.md
+    F	5b05b8126f74209e2b58e6a5f336c7f4e3fe3f94e95c56c1d607b38896a630bd	sprints/s3/sprint-plans/test-plan.md	docs/sprints/s3/sprint-plans/test-plan.md
+    F	61bd278ed60e0ec5d8dadb7bd07399901a827df37675b03837be20cb043cd994	sprints/s10/sprint-tests/integration-tests.md	docs/sprints/s10/sprint-tests/integration-tests.md
+    F	626cd4341053d0778c7708745e274a50c320b4020d238f10e18d92a018034c33	sprints/s6/sprint-tests/test-report.md	docs/sprints/s6/sprint-tests/test-report.md
+    F	699cb2309504b0e5e698b0ee59bbb81e8cb5caca28e940f03da9935b4e5009f3	sprints/s6/sprint-plans/build-plan.md	docs/sprints/s6/sprint-plans/build-plan.md
+    F	6dc359f46768bac7362e52852259b6bab7ba84e2c566b2b696f321b7bab9e90d	sprints/s4/sprint-plans/build-plan.md	docs/sprints/s4/sprint-plans/build-plan.md
+    F	701ddead1a28fd73c3017c7541b2608a8cfb0a21ffca5f790dd0eb28a1ed25bc	sprints/s4/sprint-tests/test-report.md	docs/sprints/s4/sprint-tests/test-report.md
+    F	7144018a287152975dab809385936fa6371f47578420eb13a48176fea6dde6f0	sprints/s0/sprint-plans/test-plan.md	docs/sprints/s0/sprint-plans/test-plan.md
+    F	74f17f10aaf6a30e5f45e1b24014a17b97e76128b73d432883b0c2053f7dbe8e	sprints/s10/sprint-tests/test-report.md	docs/sprints/s10/sprint-tests/test-report.md
+    F	76d9c625321cce36426212510eb75b4f76ffacf1e52227a505c8853cad288db9	sprints/s1/sprint-tests/test-report.md	docs/sprints/s1/sprint-tests/test-report.md
+    F	7fca3a690c77095226795fafdd23fd834884252e3c48942f17504b01a2b2443f	sprints/s1/sprint-tests/integration-tests.md	docs/sprints/s1/sprint-tests/integration-tests.md
+    F	80d47a7f03873fd0fe28f413c837cbdfcf6156a2b661fa831495043921f49338	sprints/s10/sprint-tests/e2e-tests.md	docs/sprints/s10/sprint-tests/e2e-tests.md
+    F	81a1795ef62849869e4f31cc8d90f6de45711929c49f546875e06f05d27747ff	sprints/s4/sprint-tests/integration-tests.md	docs/sprints/s4/sprint-tests/integration-tests.md
+    F	821d94fa9e997d135048e981e64ef0d3a43b4e995b57dc2f86219ff461814d3d	sprints/s6/sprint-tests/integration-tests.md	docs/sprints/s6/sprint-tests/integration-tests.md
+    F	8237775acfd1334ac655f3944bb0e906a009ef6c7d268a49c83c97a49ecbbbf1	sprints/s4/sprint-plans/test-plan.md	docs/sprints/s4/sprint-plans/test-plan.md
+    F	84fb69fe4c01ba5e5f3f6ee4f3d1b68127f9fd4abbb88138868c4e1d53444fe6	sprints/s6/sprint-plans/test-plan.md	docs/sprints/s6/sprint-plans/test-plan.md
+    F	87b7f134e29c5b3eb8597dafcee98f6a799740b11462b45930a460434dd5ccbf	sprints/s10/sprint-research/research-report.md	docs/sprints/s10/sprint-research/research-report.md
+    F	88e075b51e9256d19f8c6a2d8ed31f092164a394755edb6c1776bdc134c938e4	sprints/s1/sprint-meta.md	docs/sprints/s1/sprint-meta.md
+    F	8aaaf719d274eb83bd86ebdb734af1031dc48a7c5607f5569960e16b4fe8f8a0	sprints/s8/sprint-tests/test-report.md	docs/sprints/s8/sprint-tests/test-report.md
+    F	8c7afe4d97e8666646308519b4d0a041aa27d3c734c1f7560890c5025d9ef3cd	sprints/s8/sprint-plans/test-plan.md	docs/sprints/s8/sprint-plans/test-plan.md
+    F	8e80ca6a41b1701e61e88d4e871000dd9b06de4e1ad0b714b6fa2c8c2ac8d4dd	sprints/s9/sprint-research/research-report.md	docs/sprints/s9/sprint-research/research-report.md
+    F	8f796b59e91dcccfce32be3d09e570f224e21f7d31f3dce1fd7d2bd7f6fb42a3	sprints/s8/sprint-tests/e2e-tests.md	docs/sprints/s8/sprint-tests/e2e-tests.md
+    F	919cbc25cceb5b990f5b62cffbea966aee6efc871d03980db2eaec3a73113332	sprints/s10/sprint-plans/test-plan.md	docs/sprints/s10/sprint-plans/test-plan.md
+    F	9901a474a85707596bda486712ec0ad137ed4c91fb12553846de01fef2ce39a0	sprints/s3/sprint-research/research-report.md	docs/sprints/s3/sprint-research/research-report.md
+    F	9cb162af5c0f16f02bc9ddae00761111d33dc31e30810274cd6942c6d6187187	sprints/s1/sprint-tests/e2e-tests.md	docs/sprints/s1/sprint-tests/e2e-tests.md
+    F	9dd11886597db10a579e534f7e56f36903cd0f83372a0822dfa29b3465e83b76	sprints/s4/sprint-meta.md	docs/sprints/s4/sprint-meta.md
+    F	a2e63f8e67b98d0b36ff3d23c543288d1994c58fba17a492b33d529004c2eaea	decisions.md	docs/history/decisions-legacy.md
+    F	a4bca55e7e0f017398b23f3d5a5ce40a567a68effcc730d900022fa650d8625a	sprints/s2/sprint-meta.md	docs/sprints/s2/sprint-meta.md
+    F	a95b7f94ca277f485f9255999e048253cf889c32cf9611f34d4e338647961266	sprints/s6/sprint-tests/e2e-tests.md	docs/sprints/s6/sprint-tests/e2e-tests.md
+    F	ab6defeca7d674f81759be201e3b4b048765cd0027843cca93a65ced193ec64a	sprints/s1/sprint-plans/build-plan.md	docs/sprints/s1/sprint-plans/build-plan.md
+    F	abd9e18dd7178de6ede585fd1ea63d1e1cf2633a9805e0950fe8aa0f27cac5c2	sprints/s5/sprint-plans/test-plan.md	docs/sprints/s5/sprint-plans/test-plan.md
+    F	aeb00061722ea816eabafdab861cc0cf00077dc8b306d3aac0be59944d2e3f93	sprints/s3/sprint-plans/build-plan.md	docs/sprints/s3/sprint-plans/build-plan.md
+    F	b17ae446bd07d1bc039c50518e5af9a4ae9840a0b2207f4fc0873a2a63853aed	sprints/s4/sprint-research/research-report.md	docs/sprints/s4/sprint-research/research-report.md
+    F	b2813a3cf66f3174413093910741da530afa7fc41d97c4000096ad4754a062b5	sprints/s4/sprint-tests/unit-tests.md	docs/sprints/s4/sprint-tests/unit-tests.md
+    F	b59d3b0a8f48bcb4dde2afc04f61434732761b9b8f7f67ea770d9a5a494f73c6	sprints/s8/sprint-meta.md	docs/sprints/s8/sprint-meta.md
+    F	b9d374bac0d05d9ba9eae776e0045f5c838050d6cfbffdfea6fb8ab84f50fd08	sprints/s9/sprint-tests/test-report.md	docs/sprints/s9/sprint-tests/test-report.md
+    F	b9fed9038929f23277150eecd8005f6555808628711298442ff15b26296a097b	sprints/s5/sprint-meta.md	docs/sprints/s5/sprint-meta.md
+    F	c311edce11dd172d4d6931289b62c54bf54e0a2c699e29a1fccd0cc73ab3ee16	sprints/s0/sprint-plans/build-plan.md	docs/sprints/s0/sprint-plans/build-plan.md
+    F	c37b1d62af1bc77edd5148bcb1971ac7479d7c5a4e62f89c3a03d1b5a2c4ea3e	sprints/s10/sprint-meta.md	docs/sprints/s10/sprint-meta.md
+    F	c64d6441f737cb912b9973a5898718192ff10e023fe568262998cdabc00e44c5	sprints/s3/sprint-tests/e2e-tests.md	docs/sprints/s3/sprint-tests/e2e-tests.md
+    F	ca5d3aa967ce89ec96ee4f9b8fa28648e4f2b3a77999c48511f012a11bca1f52	sprints/s5/sprint-tests/e2e-tests.md	docs/sprints/s5/sprint-tests/e2e-tests.md
+    F	cbb1544610f5eb21c352450fdce6e3a8adc7a9337450f706079b0fec8ddad20b	agent-tasks/completed-tasks.md	docs/work/completed-tasks.md
+    F	d362db27b1594a2a872edeba39fa7644d582e371139ef0e37c5a5de702ba888c	sprints/s4/sprint-tests/e2e-tests.md	docs/sprints/s4/sprint-tests/e2e-tests.md
+    F	d4e249d87b21061ac29504cb5f922f859dcdebd0701a1b152329d200f38a3593	agent-tasks/agent-tasks.md	docs/work/tasks.md
+    F	d82d912d383b269ac587d2baa998462b4c7073f518610b6580e8ade0e7930fb9	sprints/s10/sprint-plans/build-plan.md	docs/sprints/s10/sprint-plans/build-plan.md
+    F	d93e3ec93ac5af4b279ac7f700c416d1b445e32b3009e76e6ff024ea788eee4b	sprints/s9/sprint-tests/unit-tests.md	docs/sprints/s9/sprint-tests/unit-tests.md
+    F	def0f046bb7bf99c1b3427eec25615daa09ef2656f253d08ca33b503e308bc14	sprints/s2/sprint-tests/e2e-tests.md	docs/sprints/s2/sprint-tests/e2e-tests.md
+    F	df69b1d37b4be5e078a6ab6d801c3303f9e7d2f74529b262686f1f668711bea1	sprints/s0/sprint-tests/test-report.md	docs/sprints/s0/sprint-tests/test-report.md
+    F	dfc3a2ea90de06ec16c91556ee5a07601f2916dfda157ac3044bd15770726589	sprints/s9/sprint-plans/test-plan.md	docs/sprints/s9/sprint-plans/test-plan.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s11/sprint-plans/build-plan.md	docs/sprints/s11/sprint-plans/build-plan.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s11/sprint-plans/test-plan.md	docs/sprints/s11/sprint-plans/test-plan.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s11/sprint-research/research-report.md	docs/sprints/s11/sprint-research/research-report.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s11/sprint-tests/e2e-tests.md	docs/sprints/s11/sprint-tests/e2e-tests.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s11/sprint-tests/integration-tests.md	docs/sprints/s11/sprint-tests/integration-tests.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s11/sprint-tests/test-report.md	docs/sprints/s11/sprint-tests/test-report.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s11/sprint-tests/unit-tests.md	docs/sprints/s11/sprint-tests/unit-tests.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s7/sprint-plans/build-plan.md	docs/sprints/s7/sprint-plans/build-plan.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s7/sprint-plans/test-plan.md	docs/sprints/s7/sprint-plans/test-plan.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s7/sprint-research/research-report.md	docs/sprints/s7/sprint-research/research-report.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s7/sprint-tests/e2e-tests.md	docs/sprints/s7/sprint-tests/e2e-tests.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s7/sprint-tests/integration-tests.md	docs/sprints/s7/sprint-tests/integration-tests.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s7/sprint-tests/test-report.md	docs/sprints/s7/sprint-tests/test-report.md
+    F	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	sprints/s7/sprint-tests/unit-tests.md	docs/sprints/s7/sprint-tests/unit-tests.md
+    F	ebb907ec0b97379ac23bacc6664e0db9ff88c2a9f38674c5c463de4288f5084a	sprints/s5/sprint-research/research-report.md	docs/sprints/s5/sprint-research/research-report.md
+    F	ebc9c7c41692e8fbd50892b4327e91d427a3c9c1cf378182c514c2b0281ce842	sprints/s2/sprint-tests/integration-tests.md	docs/sprints/s2/sprint-tests/integration-tests.md
+    F	ec16983ea1a1318e7618fff88b1f1750d58afbe3d791de24be9444fee4525424	sprints/s0/sprint-research/external-notes.md	docs/sprints/s0/sprint-research/external-notes.md
+    F	ef9f54a3e1076072cb21894ad852593591242aa3db2af533d5db3f3cac12f0bf	sprints/s1/sprint-tests/unit-tests.md	docs/sprints/s1/sprint-tests/unit-tests.md
+    F	f2b8a9bc6b010dd4fd6f47a35c27b01ab9ccd2a7da71a0b3fd67d0f6eb88c8e8	sprints/s9/sprint-tests/integration-tests.md	docs/sprints/s9/sprint-tests/integration-tests.md
+    F	f5d593e6af8ff57a4be8bf3a76e6e04490a925e1cef57eb01baab21ea688f7d2	sprints/s3/sprint-meta.md	docs/sprints/s3/sprint-meta.md
+    F	fa1e2a3be539da56af8ba0e8fec8702773eb57e3f90fb0adaa69df4ef56b4058	sprints/s3/sprint-tests/integration-tests.md	docs/sprints/s3/sprint-tests/integration-tests.md
+    F	fd8952882c5249c0c21ef8698a83055c02d6763fbfe05e4bee82094ec38d5b7c	sprints/s8/sprint-tests/unit-tests.md	docs/sprints/s8/sprint-tests/unit-tests.md
