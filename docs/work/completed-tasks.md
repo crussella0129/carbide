@@ -251,3 +251,10 @@
 - **Completed:** 2026-11-26T17:58:00Z
 - **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_triangle.rs, apps/carbide-ui/src/app/render_voronoi.rs
 - **Commit:** `03d545a56bc96af1bd77451001ef768d8e1b54c5`
+
+## T-003 (sprint 13)
+- **Description:** Extract demo seeding (`demos.rs`, 339 lines), persistence I/O + `pub(crate)` snapshot capture/restore (`io.rs`, 307 lines), and floating dialog windows (`dialogs.rs`, 472 lines) from `app/mod.rs` with native and `wasm32-unknown-unknown` builds clean.
+- **Intent:** [INT-0002](../intents/INT-0002-modularize-carbide-ui-app.md)
+- **Completed:** 2026-11-26T17:59:00Z
+- **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/app/dialogs.rs
+- **Commit:** PENDING
