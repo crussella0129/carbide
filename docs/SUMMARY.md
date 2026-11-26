@@ -1,6 +1,11 @@
 # Summary
 - [Project Book](README.md)
 - [Intents](intents/README.md)
+  - [INT-0001: Re-entry CI restoration and hygiene](intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+  - [INT-0002: Modularize carbide-ui app.rs](intents/INT-0002-modularize-carbide-ui-app.md)
+  - [INT-0003: Lattice UI parity and unification](intents/INT-0003-lattice-ui-parity-and-unification.md)
+  - [INT-0004: Dependency and toolchain modernization](intents/INT-0004-dependency-and-toolchain-modernization.md)
+  - [INT-0005: Post-rename product roadmap](intents/INT-0005-post-rename-product-roadmap.md)
 - [Tasks](work/tasks.md)
 - [Completed tasks](work/completed-tasks.md)
 - [Sprint 0](sprints/s0/sprint-meta.md)
@@ -15,3 +20,4 @@
 - [Sprint 7](sprints/s7/sprint-meta.md)
 - [Sprint 8](sprints/s8/sprint-meta.md)
 - [Sprint 9](sprints/s9/sprint-meta.md)
+- [Sprint 12](sprints/s12/sprint-meta.md)
