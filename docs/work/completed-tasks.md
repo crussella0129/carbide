@@ -250,4 +250,4 @@
 - **Intent:** [INT-0002](../intents/INT-0002-modularize-carbide-ui-app.md)
 - **Completed:** 2026-11-26T17:58:00Z
 - **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_triangle.rs, apps/carbide-ui/src/app/render_voronoi.rs
-- **Commit:** PENDING
+- **Commit:** `03d545a56bc96af1bd77451001ef768d8e1b54c5`
