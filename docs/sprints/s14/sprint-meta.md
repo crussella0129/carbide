@@ -11,3 +11,4 @@
 - **Summary:** Bring Voronoi to operational parity (formats, notes, copy/cut/paste, marquee `Selection.extra`), unify four-lattice dispatch/history paths (`INT-0003`), and fix wasm32 `.crbd`/`.tscl` dialog filter parity.
 - **Intents:** [INT-0003](../../intents/INT-0003-lattice-ui-parity-and-unification.md)
 - **Completion evidence:** INT-0003 realized (T-001..T-004): Voronoi formatting/notes/copy-cut-paste/marquee parity, four-lattice unification, wasm32 .crbd/.tscl filter fix; 646/646 tests + 6/6 CI jobs (#45877964117) green
+- **Checkpoint:** https://github.com/crussella0129/carbide/pull/197
