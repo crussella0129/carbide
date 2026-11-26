@@ -2,8 +2,8 @@
 
 <!-- sprint-loop-intent-v2 -->
 - **Intent ID:** INT-0003
-- **State:** proposed
-- **Work evidence:** none
+- **State:** planned
+- **Work evidence:** [Sprint 14 build-plan.md](../sprints/s14/sprint-plans/build-plan.md) (`T-001`–`T-004`)
 - **Completion evidence:** none
 - **Code evidence:** none
 - **Test evidence:** none
@@ -29,3 +29,4 @@ Square, hex, triangle, and Voronoi currently duplicate state maps (`square_widge
 
 ## Transition history
 - 2026-11-26: created as `proposed` during Sprint 12 6-month project assessment.
+- 2026-11-26: `proposed` → `planned` (Sprint 14 Plan Phase: `T-001`–`T-004` in `docs/sprints/s14/sprint-plans/build-plan.md`).
