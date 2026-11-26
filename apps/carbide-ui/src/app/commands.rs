@@ -302,10 +302,8 @@ impl CarbideApp {
             RibbonAction::SelectAll => self.select_all(),
             RibbonAction::SelectRegion => self.select_region(),
             RibbonAction::OpenNote => {
-                let cell = self.square.selection.cursor;
-                self.note_cell = CellId::Square(cell);
-                self.note_draft = self.notes.get(cell).to_string();
-                self.note_open = true;
+                let cell = self.active_cell_id();
+                self.open_note(cell);
             }
             RibbonAction::Quit => {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);

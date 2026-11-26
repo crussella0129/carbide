@@ -5,12 +5,13 @@ use carbide_tess::voronoi::VoronoiCoord;
 use carbide_tess::{Lattice, Point2};
 use eframe::egui;
 
+use crate::clipboard::PasteMode;
 use crate::format;
 use crate::formula_mode;
 use crate::widget;
 
-use super::helpers::draw_text_decorations;
-use super::types::EditState;
+use super::helpers::{draw_text_decorations, error_detail};
+use super::types::{CellId, EditState};
 use super::voronoi_helpers::{
     apply_seed_drag, cells_in_screen_rect, fade_alpha, pop_out_widget_center, seed_handle_alphas,
     synced_voronoi_lattice, voronoi_address, WIDGET_POP_OUT_OFFSET,
@@ -141,6 +142,69 @@ impl CarbideApp {
             }
         }
 
+        // Right-click selects the Voronoi cell under the pointer (unless it
+        // is already part of the selection), then opens the cell-actions menu.
+        if response.secondary_clicked() {
+            if let Some(coord) = cell_under {
+                if !self.voronoi.selection.contains(coord) {
+                    self.commit_edit();
+                    self.voronoi.selection.collapse_to(coord);
+                    self.voronoi_visit_history.clear();
+                }
+            }
+        }
+        response.context_menu(|ui| {
+            if ui.button("Copy").clicked() {
+                self.copy_selection(ui.ctx());
+                ui.close_menu();
+            }
+            if ui.button("Cut").clicked() {
+                self.cut_selection(ui.ctx());
+                ui.close_menu();
+            }
+            if ui.button("Paste").clicked() {
+                self.paste(PasteMode::Normal);
+                ui.close_menu();
+            }
+            if ui.button("Paste values").clicked() {
+                self.paste(PasteMode::ValuesOnly);
+                ui.close_menu();
+            }
+            if ui.button("Clear").clicked() {
+                self.clear_active();
+                ui.close_menu();
+            }
+            ui.separator();
+            if ui.button("Edit note…").clicked() {
+                self.open_note(CellId::Voronoi(self.voronoi.selection.cursor));
+                ui.close_menu();
+            }
+        });
+
+        // A hovered Voronoi cell shows its error detail, or failing that its note.
+        if let Some(p) = response.hover_pos() {
+            let local = Point2::new(p.x - origin.x, p.y - origin.y);
+            if let Some(coord) = self.voronoi_lattice.cell_at(local) {
+                if let CellValue::Error(e) = self.voronoi_cell_value(coord) {
+                    let detail = error_detail(&e);
+                    egui::show_tooltip_at_pointer(
+                        ui.ctx(),
+                        ui.layer_id(),
+                        egui::Id::new("voronoi_error_tooltip"),
+                        |ui| ui.label(detail),
+                    );
+                } else if self.voronoi_notes.has(coord) {
+                    let note = self.voronoi_notes.get(coord).to_string();
+                    egui::show_tooltip_at_pointer(
+                        ui.ctx(),
+                        ui.layer_id(),
+                        egui::Id::new("voronoi_note_tooltip"),
+                        |ui| ui.label(note),
+                    );
+                }
+            }
+        }
+
         // First pass — fill + outline every Voronoi cell.
         let stroke =
             egui::Stroke::new(1.0_f32, ui.visuals().widgets.noninteractive.bg_stroke.color);
@@ -218,6 +282,17 @@ impl CarbideApp {
                 &fmt,
                 color,
             );
+        }
+
+        // Note marker dots — drawn outside the widget/empty-text early-continue
+        // guards so empty or widget cells with notes still display their marker.
+        for i in 0..self.voronoi_lattice.len() as u32 {
+            let coord = VoronoiCoord(i);
+            if self.voronoi_notes.has(coord) {
+                let centroid = self.voronoi_lattice.centroid(coord);
+                let dot = egui::pos2(origin.x + centroid.x, origin.y + centroid.y - 16.0);
+                painter.circle_filled(dot, 3.0, egui::Color32::from_rgb(220, 90, 70));
+            }
         }
 
         // Third pass — selection stroke around every selected cell. Uses

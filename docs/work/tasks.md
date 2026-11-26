@@ -1,11 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-### T-002: Add Voronoi notes, multi-lattice `OpenNote`, hover tooltips, context menu, and persistence
-- **Status:** pending
-- **Sprint:** 14
-- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
-- **Build plan:** [s14 build-plan.md](../sprints/s14/sprint-plans/build-plan.md#t-002-add-voronoi-notes-multi-lattice-opennote-hover-tooltips-context-menu-and-persistence)
-
 ### T-003: Add Voronoi copy/cut/paste and marquee-aware `clear_active` / `begin_edit`
 - **Status:** pending
 - **Sprint:** 14

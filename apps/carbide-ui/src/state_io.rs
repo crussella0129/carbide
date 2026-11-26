@@ -70,6 +70,10 @@ pub struct UiSnapshot {
     pub hex_notes: HashMap<HexCoord, String>,
     #[serde(with = "vec_pair::tri_notes")]
     pub triangle_notes: HashMap<TriCoord, String>,
+    /// Voronoi-sheet cell notes (Sprint 14). Pre-Sprint-14 v2 snapshots
+    /// default to empty here.
+    #[serde(default, with = "vec_pair::voronoi_notes")]
+    pub voronoi_notes: HashMap<carbide_tess::voronoi::VoronoiCoord, String>,
     pub conditional_rules: Vec<Rule>,
     pub column_widths: HashMap<u32, f32>,
     pub row_heights: HashMap<u32, f32>,
@@ -108,6 +112,7 @@ mod vec_pair {
     vec_pair_for!(square_notes, (u32, u32));
     vec_pair_for!(hex_notes, carbide_tess::hex::HexCoord);
     vec_pair_for!(tri_notes, carbide_tess::triangle::TriCoord);
+    vec_pair_for!(voronoi_notes, carbide_tess::voronoi::VoronoiCoord);
 }
 
 /// JSON-encode a snapshot into the opaque store-side blob. Falls back to
@@ -224,6 +229,12 @@ mod tests {
                 .collect(),
             hex_notes: HashMap::new(),
             triangle_notes: HashMap::new(),
+            voronoi_notes: [(
+                carbide_tess::voronoi::VoronoiCoord(4),
+                "voronoi note".to_string(),
+            )]
+            .into_iter()
+            .collect(),
             conditional_rules: vec![Rule {
                 condition: Condition::GreaterThan(50.0),
                 format: CellFormat {
@@ -264,6 +275,12 @@ mod tests {
             back.square_notes.get(&(3, 3)).map(String::as_str),
             Some("remember this")
         );
+        assert_eq!(
+            back.voronoi_notes
+                .get(&carbide_tess::voronoi::VoronoiCoord(4))
+                .map(String::as_str),
+            Some("voronoi note")
+        );
         assert_eq!(back.conditional_rules.len(), 1);
         assert_eq!(back.column_widths.get(&0), Some(&90.0));
     }
@@ -296,10 +313,11 @@ mod tests {
     }
 
     #[test]
-    fn legacy_v2_snapshot_without_voronoi_formats_deserializes_with_defaults() {
+    fn legacy_v2_snapshot_without_voronoi_formats_or_notes_deserializes_with_defaults() {
         // Strict direct serde decode (not masked by ui_state_to_snapshot's
         // unwrap_or_default fallback) proves older v2 snapshots lacking
-        // `voronoi_formats` preserve existing fields and default empty.
+        // `voronoi_formats` and `voronoi_notes` preserve existing fields
+        // and default empty.
         let legacy_json = serde_json::json!({
             "active_sheet": "Triangle",
             "stage_mode": true,
@@ -319,6 +337,7 @@ mod tests {
                 .get(carbide_tess::voronoi::VoronoiCoord(0)),
             CellFormat::default()
         );
+        assert!(snap.voronoi_notes.is_empty());
     }
 
     #[test]

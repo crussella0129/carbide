@@ -252,6 +252,8 @@ pub struct CarbideApp {
     hex_notes: NoteMap<HexCoord>,
     /// Free-text notes on triangle-sheet cells.
     triangle_notes: NoteMap<TriCoord>,
+    /// Free-text notes on Voronoi-sheet cells.
+    voronoi_notes: NoteMap<VoronoiCoord>,
     /// Whether the cell-note editor window is open.
     note_open: bool,
     /// The cell the note editor is editing — on either sheet.

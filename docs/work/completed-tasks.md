@@ -273,3 +273,11 @@
 - **Completed:** 2026-11-26T18:31:30Z
 - **Files modified:** apps/carbide-ui/src/app/types.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/edit.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/state_io.rs, apps/carbide-ui/src/app/tests.rs
 - **Commit:** `08d20f6ba13b18f817295d2f85db6145eff1c922`
+
+
+## T-002 (sprint 14)
+- **Description:** Add `voronoi_notes`, unify `active_cell_id` / `note_text` / `open_note` across all four sheets (fixing `RibbonAction::OpenNote` on non-square sheets), add Voronoi note marker dots (outside empty/widget guards), error/note hover tooltips, right-click context menu, and persist `voronoi_notes` in `UiSnapshot` with strict v2 backward-compat tests.
+- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
+- **Completed:** 2026-11-26T18:33:30Z
+- **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/dialogs.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/state_io.rs
+- **Commit:** PENDING

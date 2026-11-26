@@ -402,10 +402,7 @@ impl CarbideApp {
                 }
             });
             if ui.button("Edit note…").clicked() {
-                let cell = self.square.selection.cursor;
-                self.note_cell = CellId::Square(cell);
-                self.note_draft = self.notes.get(cell).to_string();
-                self.note_open = true;
+                self.open_note(CellId::Square(self.square.selection.cursor));
                 ui.close_menu();
             }
         });

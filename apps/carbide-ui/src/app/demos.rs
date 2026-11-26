@@ -269,6 +269,7 @@ impl CarbideApp {
             notes: NoteMap::new(),
             hex_notes: NoteMap::new(),
             triangle_notes: NoteMap::new(),
+            voronoi_notes: NoteMap::new(),
             note_open: false,
             note_cell: CellId::Square((0, 0)),
             note_draft: String::new(),

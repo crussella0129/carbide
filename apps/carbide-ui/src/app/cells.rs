@@ -317,6 +317,16 @@ impl CarbideApp {
         }
     }
 
+    /// The active cursor cell on whichever sheet is currently on screen.
+    pub(super) fn active_cell_id(&self) -> CellId {
+        match self.active {
+            ActiveSheet::Square => CellId::Square(self.square.selection.cursor),
+            ActiveSheet::Hex => CellId::Hex(self.hex.selection.cursor),
+            ActiveSheet::Triangle => CellId::Triangle(self.triangle.selection.cursor),
+            ActiveSheet::Voronoi => CellId::Voronoi(self.voronoi.selection.cursor),
+        }
+    }
+
     /// Every cell in the active sheet's selection as [`CellId`]s —
     /// rectangular `primary_cells()` on Square/Hex/Triangle, and full
     /// marquee-aware `cells()` (anchor + `Selection.extra`) on Voronoi.

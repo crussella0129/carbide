@@ -410,6 +410,23 @@ impl CarbideApp {
         self.note_open &= open;
     }
 
+    /// Read the note text for `cell` on whichever sheet it belongs to.
+    pub(super) fn note_text(&self, cell: CellId) -> &str {
+        match cell {
+            CellId::Square(c) => self.notes.get(c),
+            CellId::Hex(h) => self.hex_notes.get(h),
+            CellId::Triangle(t) => self.triangle_notes.get(t),
+            CellId::Voronoi(v) => self.voronoi_notes.get(v),
+        }
+    }
+
+    /// Open the cell-note editor pre-populated for `cell` on any sheet.
+    pub(super) fn open_note(&mut self, cell: CellId) {
+        self.note_cell = cell;
+        self.note_draft = self.note_text(cell).to_string();
+        self.note_open = true;
+    }
+
     /// Write a note to whichever sheet `cell` belongs to. Blank text
     /// clears the note (see [`NoteMap::set`]).
     pub(super) fn set_note(&mut self, cell: CellId, text: String) {
@@ -417,10 +434,7 @@ impl CarbideApp {
             CellId::Square(c) => self.notes.set(c, text),
             CellId::Hex(h) => self.hex_notes.set(h, text),
             CellId::Triangle(t) => self.triangle_notes.set(t, text),
-            // Voronoi notes deferred to v151 — set_note on a Voronoi
-            // cell is a no-op for now. The note window's address path
-            // already handles CellId::Voronoi.
-            CellId::Voronoi(_) => {}
+            CellId::Voronoi(v) => self.voronoi_notes.set(v, text),
         }
     }
 

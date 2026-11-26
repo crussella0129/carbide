@@ -275,10 +275,7 @@ impl CarbideApp {
                 }
             });
             if ui.button("Edit note…").clicked() {
-                let coord = self.hex.selection.cursor;
-                self.note_cell = CellId::Hex(coord);
-                self.note_draft = self.hex_notes.get(coord).to_string();
-                self.note_open = true;
+                self.open_note(CellId::Hex(self.hex.selection.cursor));
                 ui.close_menu();
             }
         });

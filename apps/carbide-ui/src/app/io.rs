@@ -262,6 +262,11 @@ impl CarbideApp {
                 .iter()
                 .map(|(k, v)| (*k, v.to_string()))
                 .collect(),
+            voronoi_notes: self
+                .voronoi_notes
+                .iter()
+                .map(|(k, v)| (*k, v.to_string()))
+                .collect(),
             conditional_rules: self.cond_rules.clone(),
             column_widths: self.metrics.col_widths_iter().collect(),
             row_heights: self.metrics.row_heights_iter().collect(),
@@ -307,6 +312,7 @@ impl CarbideApp {
         self.notes.replace_with(s.square_notes);
         self.hex_notes.replace_with(s.hex_notes);
         self.triangle_notes.replace_with(s.triangle_notes);
+        self.voronoi_notes.replace_with(s.voronoi_notes);
         self.cond_rules = s.conditional_rules;
         self.metrics.replace_with(s.column_widths, s.row_heights);
     }
