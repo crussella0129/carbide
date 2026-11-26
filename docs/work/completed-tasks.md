@@ -244,3 +244,10 @@
 - **Completed:** 2026-11-26T17:56:00Z
 - **Files modified:** apps/carbide-ui/src/app.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/types.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/voronoi_helpers.rs, apps/carbide-ui/src/app/tests.rs
 - **Commit:** `701f92f0dcc46df80de5ad09f1cfeea6fab840a9`
+
+## T-002 (sprint 13)
+- **Description:** Extract the four lattice renderers from `app/mod.rs` into `render_square.rs` (763 lines), `render_hex.rs` (485 lines), `render_triangle.rs` (390 lines), and `render_voronoi.rs` (428 lines) with `pub(super)` entrypoints and zero behavioral change.
+- **Intent:** [INT-0002](../intents/INT-0002-modularize-carbide-ui-app.md)
+- **Completed:** 2026-11-26T17:58:00Z
+- **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_triangle.rs, apps/carbide-ui/src/app/render_voronoi.rs
+- **Commit:** PENDING
