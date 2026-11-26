@@ -223,3 +223,10 @@
 - **Completed:** 2026-11-26T17:12:00Z
 - **Files modified:** Cargo.toml, CLAUDE.md, apps/carbide-ui/src/app.rs, crates/carbide-cli/src/main.rs
 - **Commit:** `b8290b5e52a967eb331e4c40883cb1528ed465e0`
+
+## T-003 (sprint 12)
+- **Description:** Add `dev` (the Book v2 `work` branch) to `on.push.branches` in `.github/workflows/ci.yml` so pushes to `dev` run the full 5-job CI suite automatically.
+- **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+- **Completed:** 2026-11-26T17:12:30Z
+- **Files modified:** .github/workflows/ci.yml
+- **Commit:** PENDING
