@@ -1,0 +1,17 @@
+# Sprint 12 Test Critique
+
+## Concerns
+- None.
+
+## Notes
+- **Full EARS & Intent Traceability verified:** Every locked EARS clause in `docs/sprints/s12/sprint-plans/build-plan.md` (`T-001`–`T-004`) and all 6 Intent Traceability rows in `docs/sprints/s12/sprint-plans/test-plan.md` (`INT-0001` AC-1 through AC-6) have matching executed evidence across `unit-tests.md`, `integration-tests.md`, `e2e-tests.md`, and `test-report.md`. Arithmetic across all suites reconciles cleanly (`576` unit + `63` integration = `639` total = `331` workspace + `308` UI, zero failures/ignored).
+- **Post-final-commit & CI confirmation (Plan Critic C-003):** Independent `git log` / `git status` and `gh run view 45866040577` checks confirm `HEAD` is `70e25fcfcf7d7ecafe495ab173e436de8ff9ba32` (with only the uncommitted Test Phase docs and `INT-0001` `Test evidence` link in the working tree) and that GitHub Actions run `45866040577` triggered on `push` to `dev` for that exact SHA with all 6 jobs (`rustfmt + clippy` `140069000374`, `build + test (ubuntu-latest)` `140069000299`, `build + test (windows-latest)` `140069000251`, `native compile pipeline` `140069000369`, `python engine` `140069000420`, `web front-end (wasm + native)` `140069000074`) concluding `success`.
+- **CLI command fix is a genuine catch, not a weakened gate:** Running the test plan's `cargo run --bin carbide-cli` uncovered that `crates/carbide-cli/Cargo.toml` defines `[[bin]] name = "carbide-core"`. Updating `CLAUDE.md` to `cargo run -p carbide-cli` in commit `70e25fc` and verifying `cargo run -p carbide-cli` executes `crates/carbide-cli/src/main.rs` cleanly (with transparent disclosure in `unit-tests.md` and `test-report.md`) strengthens accuracy rather than weakening coverage.
+- **Direct spot-checks passed:**
+  - `apps/carbide-ui/src/app.rs`: commit `bc8e6c7` adds `_f32` suffixes to all 21 `egui::Stroke::new(...)` float literals, deletes all 4 `#[allow(dead_code)]` attributes plus the stale `// Wired into the widget pass by T-004.` comment (lines 6304–6390 verified; `git grep -n "allow(dead_code)"` returns 0 matches), and lines 2165–2175 list all four lattices (`squares, hexagons, triangles, Voronoi`), all four core crates, and hyperlink `https://github.com/crussella0129/carbide`.
+  - `Cargo.toml`, `CLAUDE.md`, `apps/carbide-ui/src/app.rs`: `git grep -in "crussella0129/tescellate"` returns 0 matches; `git grep -n "crussella0129/carbide"` matches all 3 required sites (`Cargo.toml:17`, `CLAUDE.md:68`, `apps/carbide-ui/src/app.rs:2175`). `.gitignore` preserves `.tescellate-cache/` and `*.tscl` rules per ADR-015.
+  - `.github/workflows/ci.yml`: minimal 1-line diff (`branches: [main, dev]`) with all 5 job definitions intact.
+  - `README.md`, `CLAUDE.md`, and `crates/carbide-cli/src/main.rs`: zero stale pre-v161 strings (`git grep -nE` returns 0 matches), `docs/history/decisions-legacy.md` is referenced in both `README.md:14` and `CLAUDE.md:9,37`, `CLAUDE.md:25` documents `native`/`python`/`rhai`/`rustnative` matching `crates/carbide-formula/Cargo.toml`, all linked relative paths exist in the repo, and `crates/carbide-cli/src/main.rs` has zero `(becomes ...)` artifacts.
+- **Minor non-blocking nit:** `test-report.md:29` cites `apps/carbide-ui/src/app.rs` as 7,433 lines (it is now 7,429 lines after T-001's 4 removed attribute lines + 1 removed comment + 1 wrapped line). No action required.
+
+## Confidence: clean

@@ -2,12 +2,12 @@
 
 <!-- sprint-loop-intent-v2 -->
 - **Intent ID:** INT-0001
-- **State:** active
+- **State:** realized
 - **Work evidence:** [Sprint 12 build plan](../sprints/s12/sprint-plans/build-plan.md), [Sprint 12 test plan](../sprints/s12/sprint-plans/test-plan.md), [T-001..T-004](../work/tasks.md)
-- **Completion evidence:** none
-- **Code evidence:** none
-- **Test evidence:** none
-- **Documentation evidence:** none
+- **Completion evidence:** [T-001 completion](../work/completed-tasks.md#t-001-sprint-12), [T-002 completion](../work/completed-tasks.md#t-002-sprint-12), [T-003 completion](../work/completed-tasks.md#t-003-sprint-12), [T-004 completion](../work/completed-tasks.md#t-004-sprint-12)
+- **Code evidence:** [apps/carbide-ui/src/app.rs](../../apps/carbide-ui/src/app.rs), [Cargo.toml](../../Cargo.toml), [crates/carbide-cli/src/main.rs](../../crates/carbide-cli/src/main.rs), [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
+- **Test evidence:** [Sprint 12 test report](../sprints/s12/sprint-tests/test-report.md)
+- **Documentation evidence:** [README.md](../../README.md), [CLAUDE.md](../../CLAUDE.md)
 
 ## Intent
 Restore Carbide to a green, accurate baseline on the newly deployed Sprint Loops Book v2 substrate (`dev -> main`) after a 6-month hiatus, before resuming feature development or larger refactors.
@@ -49,3 +49,4 @@ After 6 months, Rust stable advanced to 1.99.1 and elevated `float_literal_f32_f
 - 2026-11-26: created as `proposed` during Sprint 12 6-month project assessment.
 - 2026-11-26: transitioned `proposed` → `planned` with Sprint 12 build/test plans and tasks `T-001`–`T-004`.
 - 2026-11-26: transitioned `planned` → `active` at Sprint 12 Build Phase start.
+- 2026-11-26: transitioned `active` → `realized` after Sprint 12 verification (639 local tests, wasm32 zero-warning build, and GitHub Actions CI run `45866040577` all green).
