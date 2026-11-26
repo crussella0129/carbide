@@ -125,12 +125,7 @@ impl CarbideApp {
             }
             Command::Cancel => {
                 self.edit = None;
-                self.square.formula_highlight = None;
-                self.square.formula_drag = None;
-                self.hex.formula_highlight = None;
-                self.hex.formula_drag = None;
-                self.triangle.formula_highlight = None;
-                self.triangle.formula_drag = None;
+                self.clear_formula_refs();
             }
             Command::ClearMarquee => {
                 // Escape exits Stage Mode first — that's the most
@@ -140,7 +135,7 @@ impl CarbideApp {
                     self.stage_mode = false;
                     return;
                 }
-                if self.clipboard.cut_origin().is_some() {
+                if self.clipboard.has_cut() {
                     self.clipboard.consume_cut();
                 }
                 self.format_painter = None;

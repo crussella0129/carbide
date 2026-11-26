@@ -15,6 +15,8 @@
 //!
 //! No egui and no engine here, so the whole model is `cargo test`-able.
 
+use carbide_tess::voronoi::VoronoiCoord;
+
 /// One captured cell — its source, and its value rendered as a literal.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct CopiedCell {
@@ -46,6 +48,18 @@ pub enum SourceLattice {
     Square,
     Hex,
     Triangle,
+    Voronoi,
+}
+
+/// Origin cells armed for clearing when the next paste lands.
+/// Grid-indexed lattices (Square, Hex, Triangle) record the leading
+/// `(col, row)` / `(q, r)` corner and combine it with `(width, height)`.
+/// Voronoi records the exact list of cut cells so non-contiguous marquee
+/// selections clear only the cells that were actually cut.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum CutOrigin {
+    Grid(i32, i32),
+    Voronoi(Vec<VoronoiCoord>),
 }
 
 /// A rectangular block of captured cells, stored row-major — and, when
@@ -58,12 +72,8 @@ pub struct Clipboard {
     /// Which lattice the block was captured from. The paste compares
     /// this against the destination to decide source-vs-value.
     source: SourceLattice,
-    /// `Some(leading_corner)` when this block was **cut** — the smallest
-    /// `(col,row)` / `(q,r)` of the origin region, in the source
-    /// lattice's own integer coords. With `dimensions()` and `source` it
-    /// fully describes the region the next paste clears. `None` for a
-    /// plain copy.
-    cut_origin: Option<(i32, i32)>,
+    /// `Some(...)` when this block was **cut** — `None` for a plain copy.
+    cut: Option<CutOrigin>,
 }
 
 impl Clipboard {
@@ -76,14 +86,20 @@ impl Clipboard {
             height,
             cells,
             source,
-            cut_origin: None,
+            cut: None,
         }
     }
 
     /// Turn a freshly-captured block into a **cut**: record the leading
     /// corner of the origin region so the next paste can clear it.
     pub fn mark_as_cut(&mut self, origin: (i32, i32)) {
-        self.cut_origin = Some(origin);
+        self.cut = Some(CutOrigin::Grid(origin.0, origin.1));
+    }
+
+    /// Turn a freshly-captured Voronoi block into a **cut**, recording the
+    /// exact cells (including non-contiguous marquee selections) to clear.
+    pub fn mark_as_voronoi_cut(&mut self, cells: Vec<VoronoiCoord>) {
+        self.cut = Some(CutOrigin::Voronoi(cells));
     }
 
     /// Whether the clipboard holds nothing.
@@ -111,16 +127,37 @@ impl Clipboard {
         matches!(self.source, SourceLattice::Triangle)
     }
 
-    /// The leading corner of the cut origin region — `Some` only when
-    /// this block was cut. With `dimensions()` it gives the whole region.
-    pub fn cut_origin(&self) -> Option<(i32, i32)> {
-        self.cut_origin
+    /// Convenience: whether the block was captured from the Voronoi sheet.
+    pub fn from_voronoi(&self) -> bool {
+        matches!(self.source, SourceLattice::Voronoi)
     }
 
-    /// Drop the cut origin — a paste has consumed the cut, so further
-    /// pastes of this block behave as a plain copy.
+    /// Whether any cut (grid or Voronoi) is currently armed.
+    pub fn has_cut(&self) -> bool {
+        self.cut.is_some()
+    }
+
+    /// The leading corner of a grid cut origin region — `Some` only when
+    /// this block was cut from a grid-indexed lattice (Square/Hex/Triangle).
+    pub fn cut_origin(&self) -> Option<(i32, i32)> {
+        match &self.cut {
+            Some(CutOrigin::Grid(a, b)) => Some((*a, *b)),
+            _ => None,
+        }
+    }
+
+    /// The exact cells armed for clearing when this block was cut from Voronoi.
+    pub fn cut_voronoi_cells(&self) -> Option<&[VoronoiCoord]> {
+        match &self.cut {
+            Some(CutOrigin::Voronoi(cells)) => Some(cells.as_slice()),
+            _ => None,
+        }
+    }
+
+    /// Drop the cut origin — a paste (or Escape) has consumed the cut, so
+    /// further pastes of this block behave as a plain copy.
     pub fn consume_cut(&mut self) {
-        self.cut_origin = None;
+        self.cut = None;
     }
 
     /// Every captured cell as `(rel_col, rel_row, &cell)`, row-major.
@@ -308,5 +345,54 @@ mod tests {
             c.paste_text(cell, SourceLattice::Hex, PasteMode::Normal),
             c.paste_text(cell, SourceLattice::Hex, PasteMode::ValuesOnly),
         );
+    }
+
+    #[test]
+    fn voronoi_source_keeps_formula_on_voronoi_and_degrades_cross_lattice() {
+        let v = Clipboard::capture(
+            1,
+            1,
+            vec![formula("=SUM(V(0):V(2))", "99")],
+            SourceLattice::Voronoi,
+        );
+        assert!(v.from_voronoi());
+        assert!(!v.from_hex());
+        assert!(!v.from_triangle());
+        assert_eq!(v.source(), SourceLattice::Voronoi);
+        let (.., cell) = v.entries().next().unwrap();
+        assert_eq!(
+            v.paste_text(cell, SourceLattice::Voronoi, PasteMode::Normal),
+            Some("=SUM(V(0):V(2))".to_string()),
+        );
+        assert_eq!(
+            v.paste_text(cell, SourceLattice::Voronoi, PasteMode::ValuesOnly),
+            Some("99".to_string()),
+        );
+        assert_eq!(
+            v.paste_text(cell, SourceLattice::Square, PasteMode::Normal),
+            Some("99".to_string()),
+        );
+    }
+
+    #[test]
+    fn voronoi_non_contiguous_cut_tracks_exact_cells_and_consumes() {
+        let mut v = Clipboard::capture(
+            1,
+            2,
+            vec![formula("=V(0)", "1"), formula("=V(3)", "4")],
+            SourceLattice::Voronoi,
+        );
+        assert!(!v.has_cut());
+        assert_eq!(v.cut_voronoi_cells(), None);
+        v.mark_as_voronoi_cut(vec![VoronoiCoord(0), VoronoiCoord(3)]);
+        assert!(v.has_cut());
+        assert_eq!(v.cut_origin(), None);
+        assert_eq!(
+            v.cut_voronoi_cells(),
+            Some(&[VoronoiCoord(0), VoronoiCoord(3)][..])
+        );
+        v.consume_cut();
+        assert!(!v.has_cut());
+        assert_eq!(v.cut_voronoi_cells(), None);
     }
 }

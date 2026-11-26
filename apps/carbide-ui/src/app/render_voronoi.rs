@@ -296,8 +296,8 @@ impl CarbideApp {
         }
 
         // Third pass — selection stroke around every selected cell. Uses
-        // `selection.cells()` which (after T-001) returns the rect cells +
-        // `extra`, so marquee-selected cells get outlined too (ADR-013).
+        // `selection.cells()` which returns the anchor + `extra`, so
+        // marquee-selected cells get outlined too (ADR-013).
         let sel_stroke = egui::Stroke::new(2.5_f32, egui::Color32::from_rgb(70, 120, 220));
         for coord in self.voronoi.selection.cells() {
             let verts = self.voronoi_lattice.vertices(coord);
@@ -312,6 +312,26 @@ impl CarbideApp {
                 pts.push(first);
             }
             painter.add(egui::Shape::line(pts, sel_stroke));
+        }
+
+        // Cut marquee — dashed outline around every Voronoi cell armed for
+        // clearing on the next paste (cleared on paste or Escape).
+        if let Some(cut_cells) = self.clipboard.cut_voronoi_cells() {
+            let dash = egui::Stroke::new(1.5_f32, sel_stroke.color);
+            for &coord in cut_cells {
+                let verts = self.voronoi_lattice.vertices(coord);
+                if verts.is_empty() {
+                    continue;
+                }
+                let mut loop_pts: Vec<egui::Pos2> = verts
+                    .iter()
+                    .map(|v| egui::pos2(origin.x + v.x, origin.y + v.y))
+                    .collect();
+                if let Some(&first) = loop_pts.first() {
+                    loop_pts.push(first);
+                }
+                painter.extend(egui::Shape::dashed_line(&loop_pts, dash, 4.0, 3.0));
+            }
         }
 
         // Translucent marquee rect (T-006B) — visible while a marquee drag is

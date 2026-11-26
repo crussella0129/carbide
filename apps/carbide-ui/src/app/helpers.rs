@@ -1,7 +1,7 @@
 //! Pure drawing, navigation, formatting, and edit-coalescing helpers shared
 //! across `CarbideApp` submodules.
 
-use carbide_core::{CellError, CellValue, EngineKind};
+use carbide_core::{CellError, CellValue, EngineKind, SheetId};
 use carbide_tess::hex::HexCoord;
 use carbide_tess::triangle::TriCoord;
 use eframe::egui;
@@ -463,6 +463,23 @@ pub(super) fn dedup_targets(
     out
 }
 
+/// Collapse duplicate `(sheet, address)` pairs in a multi-sheet edit batch
+/// so one atomic undo step never holds two edits for the same cell — the
+/// last write wins (e.g. a paste overwriting a just-cleared cut origin).
+pub(super) fn dedup_sheet_targets(
+    targets: Vec<(SheetId, String, Option<String>)>,
+) -> Vec<(SheetId, String, Option<String>)> {
+    let mut out: Vec<(SheetId, String, Option<String>)> = Vec::new();
+    for (sheet, addr, after) in targets {
+        if let Some(slot) = out.iter_mut().find(|(s, a, _)| *s == sheet && *a == addr) {
+            slot.2 = after;
+        } else {
+            out.push((sheet, addr, after));
+        }
+    }
+    out
+}
+
 /// The new state for a range toggle: off when every cell already has the
 /// flag, on otherwise — Excel's bold/italic-over-a-range rule.
 pub(super) fn toggle_target(mut currently_on: impl Iterator<Item = bool>) -> bool {
@@ -487,4 +504,24 @@ pub(super) fn merge_format_edits(prev: Vec<FormatEdit>, new: Vec<FormatEdit>) ->
             }
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dedup_sheet_targets_keeps_last_write_per_sheet_and_preserves_distinct_sheets() {
+        let s1 = SheetId(1);
+        let s2 = SheetId(2);
+        let targets = vec![
+            (s1, "A1".to_string(), None),
+            (s2, "A1".to_string(), Some("10".to_string())),
+            (s1, "A1".to_string(), Some("override".to_string())),
+        ];
+        let out = dedup_sheet_targets(targets);
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0], (s1, "A1".to_string(), Some("override".to_string())));
+        assert_eq!(out[1], (s2, "A1".to_string(), Some("10".to_string())));
+    }
 }

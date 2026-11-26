@@ -10,11 +10,11 @@ use crate::grid;
 use crate::selection::{FillDir, HexSelection, SquareSelection, TriangleSelection};
 
 use super::helpers::{
-    commit_source, dedup_targets, hex_address, hex_in_view, natural_text, triangle_address,
-    triangle_in_view,
+    commit_source, dedup_sheet_targets, dedup_targets, hex_address, hex_in_view, natural_text,
+    triangle_address, triangle_in_view,
 };
 use super::types::{Action, ActiveSheet, CellEdit, EditState, FillAxis, Resize};
-use super::voronoi_helpers::voronoi_address;
+use super::voronoi_helpers::{voronoi_address, voronoi_paste_targets};
 use super::{CarbideApp, COLS, ROWS};
 
 impl CarbideApp {
@@ -39,7 +39,10 @@ impl CarbideApp {
                 let cursor = self.triangle.selection.cursor;
                 self.triangle.selection.collapse_to(cursor);
             }
-            ActiveSheet::Voronoi => {}
+            ActiveSheet::Voronoi => {
+                let cursor = self.voronoi.selection.cursor;
+                self.voronoi.selection.collapse_to(cursor);
+            }
         }
         let buffer = match replace_with {
             Some(ch) => ch.to_string(),
@@ -74,23 +77,59 @@ impl CarbideApp {
         }
     }
 
+    /// Apply a batch of cell writes across one or more sheets as a single
+    /// atomic undoable step (e.g. cross-sheet cut/paste clearing the origin
+    /// sheet and writing the destination sheet together).
+    pub(super) fn apply_multi_sheet_edits(
+        &mut self,
+        targets: Vec<(SheetId, String, Option<String>)>,
+    ) {
+        let mut edits = Vec::new();
+        for (sheet, addr, after) in dedup_sheet_targets(targets) {
+            let before = self.engine.get_cell(sheet, &addr).and_then(|s| s.source);
+            if before == after {
+                continue;
+            }
+            let _ = self.engine.set_cell(sheet, &addr, after.as_deref());
+            edits.push(CellEdit {
+                sheet,
+                addr,
+                before,
+                after,
+            });
+        }
+        if !edits.is_empty() {
+            self.history.record(Action::Cells(edits));
+        }
+    }
+
+    /// Clear active formula-reference highlights and drags across all four
+    /// sheets when an edit is committed or cancelled.
+    pub(super) fn clear_formula_refs(&mut self) {
+        self.square.formula_highlight = None;
+        self.square.formula_drag = None;
+        self.hex.formula_highlight = None;
+        self.hex.formula_drag = None;
+        self.triangle.formula_highlight = None;
+        self.triangle.formula_drag = None;
+        self.voronoi.formula_highlight = None;
+        self.voronoi.formula_drag = None;
+    }
+
     /// Write the in-progress edit to the active sheet and leave editing
     /// mode. An all-whitespace buffer clears the cell.
     pub(super) fn commit_edit(&mut self) {
         let Some(edit) = self.edit.take() else {
             return;
         };
-        self.square.formula_highlight = None;
-        self.square.formula_drag = None;
-        self.hex.formula_highlight = None;
-        self.hex.formula_drag = None;
+        self.clear_formula_refs();
         let source = commit_source(&edit.buffer);
         let (sheet, addr) = self.active_target();
         self.apply_edits(sheet, vec![(addr, source)]);
     }
 
-    /// Clear the selection on whichever sheet is active — the whole range
-    /// on the square sheet, the single selected cell on the hex sheet.
+    /// Clear the selection on whichever sheet is active — including all
+    /// marquee-selected cells (`Selection.extra`) on Voronoi.
     pub(super) fn clear_active(&mut self) {
         let (sheet, targets) = match self.active {
             ActiveSheet::Square => {
@@ -124,8 +163,14 @@ impl CarbideApp {
                 (self.triangle.sheet_id, targets)
             }
             ActiveSheet::Voronoi => {
-                let cursor = self.voronoi.selection.cursor;
-                (self.voronoi.sheet_id, vec![(voronoi_address(cursor), None)])
+                let targets = self
+                    .voronoi
+                    .selection
+                    .cells()
+                    .into_iter()
+                    .map(|c| (voronoi_address(c), None))
+                    .collect();
+                (self.voronoi.sheet_id, targets)
             }
         };
         self.apply_edits(sheet, targets);
@@ -213,62 +258,109 @@ impl CarbideApp {
                 self.clipboard = Clipboard::capture(width, height, cells, SourceLattice::Triangle);
                 ctx.copy_text(tsv);
             }
-            ActiveSheet::Voronoi => {}
+            ActiveSheet::Voronoi => {
+                let selected = self.voronoi.selection.cells();
+                let height = selected.len() as u32;
+                let mut cells = Vec::with_capacity(selected.len());
+                let mut tsv = String::new();
+                for coord in selected {
+                    tsv.push_str(&self.voronoi_cell_text(coord));
+                    tsv.push('\n');
+                    cells.push(self.copied_cell(self.voronoi.sheet_id, &voronoi_address(coord)));
+                }
+                self.clipboard = Clipboard::capture(1, height, cells, SourceLattice::Voronoi);
+                ctx.copy_text(tsv);
+            }
         }
     }
 
     /// Cut the selected range — captures it like a copy, then arms the
-    /// range so the next paste clears it. Works on either sheet.
+    /// range so the next paste clears it atomically (same-sheet or
+    /// cross-sheet). Works across all four lattices.
     pub(super) fn cut_selection(&mut self, ctx: &egui::Context) {
         self.copy_selection(ctx);
-        // copy_selection just rebuilt the clipboard as a copy — mark it a
-        // cut, recording the leading corner of the selection's origin.
-        let origin = match self.active {
+        match self.active {
             ActiveSheet::Square => {
                 let ((c, r), _) = self.square.selection.bounds();
-                (c as i32, r as i32)
+                self.clipboard.mark_as_cut((c as i32, r as i32));
             }
             ActiveSheet::Hex => {
                 let (min, _) = self.hex.selection.bounds();
-                (min.q, min.r)
+                self.clipboard.mark_as_cut((min.q, min.r));
             }
             ActiveSheet::Triangle => {
                 let (min, _) = self.triangle.selection.bounds();
-                (min.col, min.row)
+                self.clipboard.mark_as_cut((min.col, min.row));
             }
-            // Voronoi has no grid origin — pick (0, 0) so the math
-            // downstream keeps a sensible default; copy/cut on the
-            // Voronoi sheet is a v151 follow-up anyway.
-            ActiveSheet::Voronoi => (0, 0),
-        };
-        self.clipboard.mark_as_cut(origin);
+            ActiveSheet::Voronoi => {
+                self.clipboard
+                    .mark_as_voronoi_cut(self.voronoi.selection.cells());
+            }
+        }
+    }
+
+    /// Build the `(sheet, addr, None)` clear edits for an armed cut across
+    /// any lattice, queued ahead of paste writes so overlapping cells are
+    /// overwritten and cross-sheet cuts stay atomic in one undo step.
+    fn cut_clear_targets(&self) -> Vec<(SheetId, String, Option<String>)> {
+        let mut clears = Vec::new();
+        let (width, height) = self.clipboard.dimensions();
+        match self.clipboard.source() {
+            SourceLattice::Square => {
+                if let Some((oc, or)) = self.clipboard.cut_origin() {
+                    for j in 0..height {
+                        for i in 0..width {
+                            let addr = grid::cell_address(oc as u32 + i, or as u32 + j);
+                            clears.push((self.square.sheet_id, addr, None));
+                        }
+                    }
+                }
+            }
+            SourceLattice::Hex => {
+                if let Some((oq, or)) = self.clipboard.cut_origin() {
+                    for j in 0..height {
+                        for i in 0..width {
+                            let coord = HexCoord::new(oq + i as i32, or + j as i32);
+                            clears.push((self.hex.sheet_id, hex_address(coord), None));
+                        }
+                    }
+                }
+            }
+            SourceLattice::Triangle => {
+                if let Some((oc, or)) = self.clipboard.cut_origin() {
+                    for j in 0..height {
+                        for i in 0..width {
+                            let coord = TriCoord::new(oc + i as i32, or + j as i32);
+                            clears.push((self.triangle.sheet_id, triangle_address(coord), None));
+                        }
+                    }
+                }
+            }
+            SourceLattice::Voronoi => {
+                if let Some(coords) = self.clipboard.cut_voronoi_cells() {
+                    for &coord in coords {
+                        clears.push((self.voronoi.sheet_id, voronoi_address(coord), None));
+                    }
+                }
+            }
+        }
+        clears
     }
 
     /// Paste the clipboard block with its top-left at the active cell,
-    /// recorded as one undo step. Pasting onto the same kind of sheet
-    /// the copy came from writes the cell sources; pasting onto a
-    /// different lattice writes each cell's value instead.
+    /// recorded as one atomic undo step (including clearing any armed cut
+    /// origin, whether on the same sheet or another lattice). Pasting onto
+    /// the same kind of sheet preserves sources; pasting across lattices or
+    /// with `ValuesOnly` writes evaluated literals.
     pub(super) fn paste(&mut self, mode: PasteMode) {
         if self.clipboard.is_empty() {
             return;
         }
         let (width, height) = self.clipboard.dimensions();
+        let mut targets = self.cut_clear_targets();
         match self.active {
             ActiveSheet::Square => {
                 let (target_c, target_r) = self.square.selection.cursor;
-                let mut targets = Vec::new();
-                // A cut from this sheet clears its origin cells — queued
-                // first, so a paste on the same cell overrides the clear.
-                if let Some((oc, or)) = self.clipboard.cut_origin() {
-                    if matches!(self.clipboard.source(), SourceLattice::Square) {
-                        for j in 0..height {
-                            for i in 0..width {
-                                let addr = grid::cell_address(oc as u32 + i, or as u32 + j);
-                                targets.push((addr, None));
-                            }
-                        }
-                    }
-                }
                 for (rel_c, rel_r, cell) in self.clipboard.entries() {
                     let c = target_c + rel_c;
                     let r = target_r + rel_r;
@@ -276,9 +368,9 @@ impl CarbideApp {
                         continue;
                     }
                     let source = self.clipboard.paste_text(cell, SourceLattice::Square, mode);
-                    targets.push((grid::cell_address(c, r), source));
+                    targets.push((self.square.sheet_id, grid::cell_address(c, r), source));
                 }
-                self.apply_edits(self.square.sheet_id, targets);
+                self.apply_multi_sheet_edits(targets);
                 // Select the pasted block, the active cell at its top-left.
                 let end_c = (target_c + width - 1).min(COLS - 1);
                 let end_r = (target_r + height - 1).min(ROWS - 1);
@@ -287,46 +379,21 @@ impl CarbideApp {
             }
             ActiveSheet::Hex => {
                 let cursor = self.hex.selection.cursor;
-                let mut targets = Vec::new();
-                // A cut from this sheet clears its origin cells — queued
-                // first, so a paste on the same cell overrides the clear.
-                if let Some((oq, or)) = self.clipboard.cut_origin() {
-                    if matches!(self.clipboard.source(), SourceLattice::Hex) {
-                        for j in 0..height {
-                            for i in 0..width {
-                                let coord = HexCoord::new(oq + i as i32, or + j as i32);
-                                targets.push((hex_address(coord), None));
-                            }
-                        }
-                    }
-                }
                 for (rel_c, rel_r, cell) in self.clipboard.entries() {
                     let coord = HexCoord::new(cursor.q + rel_c as i32, cursor.r + rel_r as i32);
                     if !hex_in_view(coord) {
                         continue;
                     }
                     let source = self.clipboard.paste_text(cell, SourceLattice::Hex, mode);
-                    targets.push((hex_address(coord), source));
+                    targets.push((self.hex.sheet_id, hex_address(coord), source));
                 }
-                self.apply_edits(self.hex.sheet_id, targets);
+                self.apply_multi_sheet_edits(targets);
                 // Select the pasted block, the cursor at its origin.
                 let far = HexCoord::new(cursor.q + width as i32 - 1, cursor.r + height as i32 - 1);
                 self.hex.selection = HexSelection::from_anchor_cursor(far, cursor);
             }
             ActiveSheet::Triangle => {
                 let cursor = self.triangle.selection.cursor;
-                let mut targets = Vec::new();
-                // A cut from this sheet clears its origin cells.
-                if let Some((oc, or)) = self.clipboard.cut_origin() {
-                    if matches!(self.clipboard.source(), SourceLattice::Triangle) {
-                        for j in 0..height {
-                            for i in 0..width {
-                                let coord = TriCoord::new(oc + i as i32, or + j as i32);
-                                targets.push((triangle_address(coord), None));
-                            }
-                        }
-                    }
-                }
                 for (rel_c, rel_r, cell) in self.clipboard.entries() {
                     let coord = TriCoord::new(cursor.col + rel_c as i32, cursor.row + rel_r as i32);
                     if !triangle_in_view(coord) {
@@ -335,16 +402,30 @@ impl CarbideApp {
                     let source = self
                         .clipboard
                         .paste_text(cell, SourceLattice::Triangle, mode);
-                    targets.push((triangle_address(coord), source));
+                    targets.push((self.triangle.sheet_id, triangle_address(coord), source));
                 }
-                self.apply_edits(self.triangle.sheet_id, targets);
+                self.apply_multi_sheet_edits(targets);
                 let far = TriCoord::new(
                     cursor.col + width as i32 - 1,
                     cursor.row + height as i32 - 1,
                 );
                 self.triangle.selection = TriangleSelection::from_anchor_cursor(far, cursor);
             }
-            ActiveSheet::Voronoi => {}
+            ActiveSheet::Voronoi => {
+                let cursor = self.voronoi.selection.cursor;
+                let lattice_len = self.voronoi_lattice.len() as u32;
+                let (vor_targets, pasted_coords) =
+                    voronoi_paste_targets(&self.clipboard, cursor, lattice_len, mode);
+                for (addr, source) in vor_targets {
+                    targets.push((self.voronoi.sheet_id, addr, source));
+                }
+                self.apply_multi_sheet_edits(targets);
+                self.voronoi.selection.collapse_to(cursor);
+                self.voronoi
+                    .selection
+                    .extra
+                    .extend(pasted_coords.into_iter().skip(1));
+            }
         }
         // A paste consumes the cut — the clipboard reverts to a copy.
         self.clipboard.consume_cut();

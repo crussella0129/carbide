@@ -281,3 +281,11 @@
 - **Completed:** 2026-11-26T18:33:30Z
 - **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/cells.rs, apps/carbide-ui/src/app/dialogs.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/state_io.rs
 - **Commit:** `975a893fab042404d5020b2aabb3f47d236dc8b9`
+
+
+## T-003 (sprint 14)
+- **Description:** Add `SourceLattice::Voronoi` and single `Option<CutOrigin>` (`Grid` | `Voronoi`) to `Clipboard`, wire Voronoi copy/cut/paste (with `1 × N` marquee capture, dashed cut outline, Escape `has_cut()` cancel, post-paste marquee selection, and cross-lattice degradation), unify atomic multi-sheet cut/paste (`apply_multi_sheet_edits`, `cut_clear_targets`, `dedup_sheet_targets`) and `clear_formula_refs`, and make Voronoi `clear_active`/`begin_edit` marquee-aware.
+- **Intent:** [INT-0003](../intents/INT-0003-lattice-ui-parity-and-unification.md)
+- **Completed:** 2026-11-26T18:38:30Z
+- **Files modified:** apps/carbide-ui/src/clipboard.rs, apps/carbide-ui/src/app/edit.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/render_voronoi.rs, apps/carbide-ui/src/app/voronoi_helpers.rs
+- **Commit:** PENDING
