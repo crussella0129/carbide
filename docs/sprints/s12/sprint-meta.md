@@ -11,3 +11,4 @@
 - **Summary:** Re-entry Book v2 substrate migration, Rust 1.99 CI restoration, and ADR-015/doc hygiene
 - **Intents:** [INT-0001](../../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
 - **Completion evidence:** INT-0001 realized: Book v2 substrate deployed (contract 4), 21 Rust 1.99 UI clippy errors and 4 stale dead_code allows fixed, ADR-015 URLs + stale docs refreshed, CI enabled on dev; 639/639 tests and GitHub Actions run 45866040577 all green.
+- **Checkpoint:** https://github.com/crussella0129/carbide/pull/193
