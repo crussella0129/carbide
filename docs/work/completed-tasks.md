@@ -209,3 +209,31 @@
 - **Completed:** 2026-05-22T17:02:00Z
 - **Files modified:** decisions.md
 - **Commit:** `19e1162`
+
+## T-001 (sprint 12)
+- **Description:** Fix all 21 Rust 1.99 `float_literal_f32_fallback` clippy errors (`_f32` suffixes on `egui::Stroke::new` calls) and remove 4 stale `#[allow(dead_code)]` attributes plus obsolete T-004 comment in `apps/carbide-ui/src/app.rs`.
+- **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+- **Completed:** 2026-11-26T17:10:00Z
+- **Files modified:** apps/carbide-ui/src/app.rs
+- **Commit:** `bc8e6c75ec96e0cd2695a57ba382cd4717db8e68`
+
+## T-002 (sprint 12)
+- **Description:** Complete ADR-015 step 3 by flipping the three preserved `crussella0129/tescellate` URLs (`Cargo.toml`, `CLAUDE.md`, `apps/carbide-ui/src/app.rs`) to `crussella0129/carbide`, update About dialog lattice description (squares, hexagons, triangles, Voronoi), and remove redundant `(becomes carbide-cli in v161)` comment in `crates/carbide-cli/src/main.rs`.
+- **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+- **Completed:** 2026-11-26T17:12:00Z
+- **Files modified:** Cargo.toml, CLAUDE.md, apps/carbide-ui/src/app.rs, crates/carbide-cli/src/main.rs
+- **Commit:** `b8290b5e52a967eb331e4c40883cb1528ed465e0`
+
+## T-003 (sprint 12)
+- **Description:** Add `dev` (the Book v2 `work` branch) to `on.push.branches` in `.github/workflows/ci.yml` so pushes to `dev` run the full 5-job CI suite automatically.
+- **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+- **Completed:** 2026-11-26T17:12:30Z
+- **Files modified:** .github/workflows/ci.yml
+- **Commit:** `6d7da0139608a8dd1f497bb7ab3530892fa8f739`
+
+## T-004 (sprint 12)
+- **Description:** Refresh stale Phase-0 / Electron documentation in `README.md` and `CLAUDE.md` to accurately reflect the pure-Rust workspace + `apps/carbide-ui` (`egui`/`eframe` native + wasm32) stack, 4 implemented lattices, `native`/`python` Cargo features, Book v2 layout (`docs/` + `docs/history/decisions-legacy.md`), and working `cargo` build/test commands.
+- **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+- **Completed:** 2026-11-26T17:13:00Z
+- **Files modified:** README.md, CLAUDE.md
+- **Commit:** `00b87fd1927a01240af0b5ee03d002f5ebe60f49`

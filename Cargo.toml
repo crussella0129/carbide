@@ -14,7 +14,7 @@ edition = "2021"
 rust-version = "1.75"
 authors = ["crussella0129"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/crussella0129/tescellate"
+repository = "https://github.com/crussella0129/carbide"
 readme = "README.md"
 
 [workspace.dependencies]

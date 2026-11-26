@@ -2164,15 +2164,15 @@ impl CarbideApp {
                 ui.add_space(6.0);
                 ui.label(
                     "A pure-Rust spreadsheet with non-square tessellating cells \
-                     (squares, hexagons) and a DAG-evaluated formula core.",
+                     (squares, hexagons, triangles, Voronoi) and a DAG-evaluated formula core.",
                 );
                 ui.add_space(6.0);
                 ui.label(
                     "Built with egui / eframe; compiles native and to \
-                     WebAssembly. Engine: carbide-core / -tess / -formula.",
+                     WebAssembly. Engine: carbide-core / -tess / -formula / -store.",
                 );
                 ui.add_space(8.0);
-                ui.hyperlink_to("Source", "https://github.com/crussella0129/tescellate");
+                ui.hyperlink_to("Source", "https://github.com/crussella0129/carbide");
             });
         self.about_open = open;
     }
@@ -3664,7 +3664,7 @@ impl CarbideApp {
         });
 
         let visuals = ui.visuals();
-        let grid_line = egui::Stroke::new(1.0, visuals.weak_text_color());
+        let grid_line = egui::Stroke::new(1.0_f32, visuals.weak_text_color());
         let header_bg = visuals.faint_bg_color;
         let cell_bg = visuals.extreme_bg_color;
         let text_color = visuals.text_color();
@@ -3672,7 +3672,7 @@ impl CarbideApp {
         let sel = visuals.selection.bg_fill;
         let sel_tint = egui::Color32::from_rgba_unmultiplied(sel.r(), sel.g(), sel.b(), 64);
         let find_tint = egui::Color32::from_rgba_unmultiplied(255, 200, 0, 80);
-        let border_stroke = egui::Stroke::new(2.0, text_color);
+        let border_stroke = egui::Stroke::new(2.0_f32, text_color);
         let font = egui::FontId::proportional(13.0);
 
         // Viewport culling: only the cells whose span overlaps the
@@ -3775,7 +3775,7 @@ impl CarbideApp {
             painter.rect_stroke(
                 egui::Rect::from_min_max(tl.min, br.max),
                 0.0,
-                egui::Stroke::new(1.5, sel_color),
+                egui::Stroke::new(1.5_f32, sel_color),
             );
         }
         // The active-cell ring.
@@ -3783,14 +3783,14 @@ impl CarbideApp {
         painter.rect_stroke(
             self.metrics.cell_rect(origin, sc, sr),
             0.0,
-            egui::Stroke::new(2.0, sel_color),
+            egui::Stroke::new(2.0_f32, sel_color),
         );
 
         // The fill handle — a small filled square at the bottom-right
         // of the selection's bounding rect. The hit-test zone is wider
         // than the drawn square so near-misses still grab.
         painter.rect_filled(fill_handle_visual, 0.0, sel_color);
-        painter.rect_stroke(fill_handle_visual, 0.0, egui::Stroke::new(1.0, cell_bg));
+        painter.rect_stroke(fill_handle_visual, 0.0, egui::Stroke::new(1.0_f32, cell_bg));
 
         // The cut marquee — a dashed border around the armed range, when
         // the clipboard's cut belongs to this (square) sheet.
@@ -3811,7 +3811,7 @@ impl CarbideApp {
                 ];
                 painter.extend(egui::Shape::dashed_line(
                     &corners,
-                    egui::Stroke::new(1.5, sel_color),
+                    egui::Stroke::new(1.5_f32, sel_color),
                     4.0,
                     3.0,
                 ));
@@ -3842,7 +3842,7 @@ impl CarbideApp {
                 let formula_color = egui::Color32::from_rgb(70, 120, 220);
                 painter.extend(egui::Shape::dashed_line(
                     &corners,
-                    egui::Stroke::new(1.8, formula_color),
+                    egui::Stroke::new(1.8_f32, formula_color),
                     5.0,
                     3.0,
                 ));
@@ -4033,7 +4033,7 @@ impl CarbideApp {
         painter.add(egui::Shape::convex_polygon(vertices.clone(), fill, stroke));
         // Per-edge borders, stroked heavier over the polygon outline.
         if fmt.hex_borders.edges.iter().any(|&on| on) {
-            let border = egui::Stroke::new(2.0, text_color);
+            let border = egui::Stroke::new(2.0_f32, text_color);
             for (i, &on) in fmt.hex_borders.edges.iter().enumerate() {
                 if on {
                     painter.line_segment([vertices[i], vertices[(i + 1) % 6]], border);
@@ -4304,8 +4304,8 @@ impl CarbideApp {
         }
 
         let visuals = ui.visuals();
-        let line = egui::Stroke::new(1.0, visuals.weak_text_color());
-        let sel_stroke = egui::Stroke::new(2.5, visuals.selection.stroke.color);
+        let line = egui::Stroke::new(1.0_f32, visuals.weak_text_color());
+        let sel_stroke = egui::Stroke::new(2.5_f32, visuals.selection.stroke.color);
         let cell_bg = visuals.extreme_bg_color;
         let sel_bg = visuals.selection.bg_fill;
         let text_color = visuals.text_color();
@@ -4340,7 +4340,7 @@ impl CarbideApp {
         if let Some((oq, or)) = self.clipboard.cut_origin() {
             if matches!(self.clipboard.source(), SourceLattice::Hex) {
                 let (cw, ch) = self.clipboard.dimensions();
-                let dash = egui::Stroke::new(1.5, sel_stroke.color);
+                let dash = egui::Stroke::new(1.5_f32, sel_stroke.color);
                 for j in 0..ch {
                     for i in 0..cw {
                         let coord = HexCoord::new(oq + i as i32, or + j as i32);
@@ -4369,7 +4369,7 @@ impl CarbideApp {
         if self.edit.is_some() {
             if let Some(hl) = self.hex.formula_highlight {
                 let formula_color = egui::Color32::from_rgb(70, 120, 220);
-                let dash = egui::Stroke::new(1.8, formula_color);
+                let dash = egui::Stroke::new(1.8_f32, formula_color);
                 for coord in hex::axial_parallelogram(hl.start, hl.end) {
                     if !hex_in_view(coord) {
                         continue;
@@ -4615,7 +4615,7 @@ impl CarbideApp {
 
         // First pass: fills (so outlines and text draw on top).
         let edge = ui.visuals().widgets.noninteractive.fg_stroke.color;
-        let outline = egui::Stroke::new(1.0, edge);
+        let outline = egui::Stroke::new(1.0_f32, edge);
         let selected_color = egui::Color32::from_rgba_unmultiplied(70, 120, 220, 60);
         let r = TRIANGLE_RADIUS;
         for row in -r..=r {
@@ -4680,7 +4680,7 @@ impl CarbideApp {
         }
 
         // Selection outline — every selected cell gets a brighter edge.
-        let selection_stroke = egui::Stroke::new(2.0, egui::Color32::from_rgb(70, 120, 220));
+        let selection_stroke = egui::Stroke::new(2.0_f32, egui::Color32::from_rgb(70, 120, 220));
         for coord in self.triangle.selection.cells() {
             if !triangle_in_view(coord) {
                 continue;
@@ -4704,7 +4704,7 @@ impl CarbideApp {
         if let Some((oc, or)) = self.clipboard.cut_origin() {
             if matches!(self.clipboard.source(), SourceLattice::Triangle) {
                 let (cw, ch) = self.clipboard.dimensions();
-                let dash = egui::Stroke::new(1.5, egui::Color32::from_rgb(70, 120, 220));
+                let dash = egui::Stroke::new(1.5_f32, egui::Color32::from_rgb(70, 120, 220));
                 for j in 0..ch {
                     for i in 0..cw {
                         let coord = TriCoord::new(oc + i as i32, or + j as i32);
@@ -4733,7 +4733,7 @@ impl CarbideApp {
         if self.edit.is_some() {
             if let Some(hl) = self.triangle.formula_highlight {
                 let formula_color = egui::Color32::from_rgb(70, 120, 220);
-                let dash = egui::Stroke::new(1.8, formula_color);
+                let dash = egui::Stroke::new(1.8_f32, formula_color);
                 let (min, max) = hl.start.min_max(hl.end);
                 for row in min.row..=max.row {
                     for col in min.col..=max.col {
@@ -4967,7 +4967,8 @@ impl CarbideApp {
         }
 
         // First pass — fill + outline every Voronoi cell.
-        let stroke = egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color);
+        let stroke =
+            egui::Stroke::new(1.0_f32, ui.visuals().widgets.noninteractive.bg_stroke.color);
         let palette: [egui::Color32; 8] = [
             egui::Color32::from_rgb(232, 213, 196),
             egui::Color32::from_rgb(196, 222, 232),
@@ -5019,7 +5020,7 @@ impl CarbideApp {
         // Third pass — selection stroke around every selected cell. Uses
         // `selection.cells()` which (after T-001) returns the rect cells +
         // `extra`, so marquee-selected cells get outlined too (ADR-013).
-        let sel_stroke = egui::Stroke::new(2.5, egui::Color32::from_rgb(70, 120, 220));
+        let sel_stroke = egui::Stroke::new(2.5_f32, egui::Color32::from_rgb(70, 120, 220));
         for coord in self.voronoi.selection.cells() {
             let verts = self.voronoi_lattice.vertices(coord);
             if verts.is_empty() {
@@ -5050,7 +5051,7 @@ impl CarbideApp {
                 painter.rect_stroke(
                     rect,
                     0.0,
-                    egui::Stroke::new(1.5, egui::Color32::from_rgb(70, 120, 220)),
+                    egui::Stroke::new(1.5_f32, egui::Color32::from_rgb(70, 120, 220)),
                 );
             }
         }
@@ -5199,7 +5200,7 @@ impl CarbideApp {
                         radius,
                         fill,
                         egui::Stroke::new(
-                            1.5,
+                            1.5_f32,
                             egui::Color32::from_rgba_premultiplied(255, 255, 255, alpha),
                         ),
                     );
@@ -5957,7 +5958,7 @@ fn draw_text_decorations(
     fmt: &CellFormat,
     color: egui::Color32,
 ) {
-    let stroke = egui::Stroke::new(1.0, color);
+    let stroke = egui::Stroke::new(1.0_f32, color);
     if fmt.strikethrough {
         painter.hline(rect.x_range(), rect.center().y, stroke);
     }
@@ -6301,11 +6302,9 @@ fn synced_voronoi_lattice(engine: &WorkbookEngine, sid: SheetId) -> VoronoiLatti
 /// Within `INNER` of the cursor the handle is fully opaque; past `OUTER`
 /// it's invisible; between the two it fades linearly.
 const SEED_FADE_INNER: f32 = 40.0;
-#[allow(dead_code)]
 const SEED_FADE_OUTER: f32 = 80.0;
 /// Maximum alpha for the seed-handle fill (below 255 so the dot reads as
 /// a marker rather than a fully-opaque blob over cell content).
-#[allow(dead_code)]
 const SEED_FADE_MAX_ALPHA: u8 = 225;
 
 /// Distance-to-alpha mapping for the seed-handle proximity fade (ADR-014).
@@ -6358,7 +6357,6 @@ fn seed_handle_alphas(
 /// Pop-out offset distance (lattice units) for a widget whose centroid
 /// would otherwise sit under a visible seed handle. Larger than the
 /// handle's 5px hit radius plus a comfort margin (ADR-014).
-#[allow(dead_code)]
 const WIDGET_POP_OUT_OFFSET: f32 = 30.0;
 
 /// When a Voronoi widget cell's seed handle is visible (cursor near), the
@@ -6373,8 +6371,6 @@ const WIDGET_POP_OUT_OFFSET: f32 = 30.0;
 /// returned `Vec2` to screen via `egui::pos2(origin.x + result.x, origin.y
 /// + result.y)`. Precondition: 1 lattice unit == 1 screen pixel with no
 /// zoom (ADR-013 C-006); a future zoom feature must scale `offset` first.
-// Wired into the widget pass by T-004.
-#[allow(dead_code)]
 fn pop_out_widget_center<F: Fn(Point2) -> Option<VoronoiCoord>>(
     centroid: Point2,
     offset: f32,
