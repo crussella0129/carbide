@@ -21,3 +21,4 @@
 - [Sprint 8](sprints/s8/sprint-meta.md)
 - [Sprint 9](sprints/s9/sprint-meta.md)
 - [Sprint 12](sprints/s12/sprint-meta.md)
+- [Sprint 13](sprints/s13/sprint-meta.md)
