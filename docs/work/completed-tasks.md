@@ -215,4 +215,4 @@
 - **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
 - **Completed:** 2026-11-26T17:10:00Z
 - **Files modified:** apps/carbide-ui/src/app.rs
-- **Commit:** PENDING
+- **Commit:** `bc8e6c75ec96e0cd2695a57ba382cd4717db8e68`
