@@ -209,3 +209,10 @@
 - **Completed:** 2026-05-22T17:02:00Z
 - **Files modified:** decisions.md
 - **Commit:** `19e1162`
+
+## T-001 (sprint 12)
+- **Description:** Fix all 21 Rust 1.99 `float_literal_f32_fallback` clippy errors (`_f32` suffixes on `egui::Stroke::new` calls) and remove 4 stale `#[allow(dead_code)]` attributes plus obsolete T-004 comment in `apps/carbide-ui/src/app.rs`.
+- **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+- **Completed:** 2026-11-26T17:10:00Z
+- **Files modified:** apps/carbide-ui/src/app.rs
+- **Commit:** PENDING
