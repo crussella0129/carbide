@@ -237,3 +237,10 @@
 - **Completed:** 2026-11-26T17:13:00Z
 - **Files modified:** README.md, CLAUDE.md
 - **Commit:** `00b87fd1927a01240af0b5ee03d002f5ebe60f49`
+
+## T-001 (sprint 13)
+- **Description:** Convert `apps/carbide-ui/src/app.rs` into `apps/carbide-ui/src/app/mod.rs` and extract `types.rs` (313 lines), `helpers.rs` (500 lines), `voronoi_helpers.rs` (235 lines), and `tests.rs` (842 lines) with `pub(super)` internal visibility and zero behavioral change.
+- **Intent:** [INT-0002](../intents/INT-0002-modularize-carbide-ui-app.md)
+- **Completed:** 2026-11-26T17:56:00Z
+- **Files modified:** apps/carbide-ui/src/app.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/types.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/voronoi_helpers.rs, apps/carbide-ui/src/app/tests.rs
+- **Commit:** PENDING
