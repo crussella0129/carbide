@@ -2,11 +2,11 @@
 
 <!-- sprint-loop-intent-v2 -->
 - **Intent ID:** INT-0002
-- **State:** proposed
-- **Work evidence:** none
-- **Completion evidence:** none
-- **Code evidence:** none
-- **Test evidence:** none
+- **State:** realized
+- **Work evidence:** [Sprint 13 build plan](../sprints/s13/sprint-plans/build-plan.md), [Sprint 13 test plan](../sprints/s13/sprint-plans/test-plan.md), [T-001..T-004](../work/tasks.md)
+- **Completion evidence:** [T-001 completion](../work/completed-tasks.md#t-001-sprint-13), [T-002 completion](../work/completed-tasks.md#t-002-sprint-13), [T-003 completion](../work/completed-tasks.md#t-003-sprint-13), [T-004 completion](../work/completed-tasks.md#t-004-sprint-13)
+- **Code evidence:** [apps/carbide-ui/src/app/mod.rs](../../apps/carbide-ui/src/app/mod.rs) (and 14 sibling submodules under `apps/carbide-ui/src/app/`)
+- **Test evidence:** [Sprint 13 test report](../sprints/s13/sprint-tests/test-report.md)
 - **Documentation evidence:** none
 
 ## Intent
@@ -30,3 +30,6 @@ Decompose `apps/carbide-ui/src/app.rs` (currently 7,433 lines) into cohesive sub
 
 ## Transition history
 - 2026-11-26: created as `proposed` during Sprint 12 6-month project assessment.
+- 2026-11-26: transitioned `proposed` → `planned` with Sprint 13 build/test plans and tasks `T-001`–`T-004`.
+- 2026-11-26: transitioned `planned` → `active` at Sprint 13 Build Phase start.
+- 2026-11-26: transitioned `active` → `realized` after Sprint 13 verification (15 modules all ≤ 839 lines, 639/639 tests, wasm32 zero-warning build, and GitHub Actions CI run `45872819726` all green).
