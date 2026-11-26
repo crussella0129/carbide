@@ -2164,15 +2164,15 @@ impl CarbideApp {
                 ui.add_space(6.0);
                 ui.label(
                     "A pure-Rust spreadsheet with non-square tessellating cells \
-                     (squares, hexagons) and a DAG-evaluated formula core.",
+                     (squares, hexagons, triangles, Voronoi) and a DAG-evaluated formula core.",
                 );
                 ui.add_space(6.0);
                 ui.label(
                     "Built with egui / eframe; compiles native and to \
-                     WebAssembly. Engine: carbide-core / -tess / -formula.",
+                     WebAssembly. Engine: carbide-core / -tess / -formula / -store.",
                 );
                 ui.add_space(8.0);
-                ui.hyperlink_to("Source", "https://github.com/crussella0129/tescellate");
+                ui.hyperlink_to("Source", "https://github.com/crussella0129/carbide");
             });
         self.about_open = open;
     }

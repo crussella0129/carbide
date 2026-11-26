@@ -216,3 +216,10 @@
 - **Completed:** 2026-11-26T17:10:00Z
 - **Files modified:** apps/carbide-ui/src/app.rs
 - **Commit:** `bc8e6c75ec96e0cd2695a57ba382cd4717db8e68`
+
+## T-002 (sprint 12)
+- **Description:** Complete ADR-015 step 3 by flipping the three preserved `crussella0129/tescellate` URLs (`Cargo.toml`, `CLAUDE.md`, `apps/carbide-ui/src/app.rs`) to `crussella0129/carbide`, update About dialog lattice description (squares, hexagons, triangles, Voronoi), and remove redundant `(becomes carbide-cli in v161)` comment in `crates/carbide-cli/src/main.rs`.
+- **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
+- **Completed:** 2026-11-26T17:12:00Z
+- **Files modified:** Cargo.toml, CLAUDE.md, apps/carbide-ui/src/app.rs, crates/carbide-cli/src/main.rs
+- **Commit:** PENDING

@@ -58,6 +58,6 @@ The Bash / PowerShell tool starts in the repo root (`C:\Users\charl\Carbide`) an
 ## Repo identity
 
 - Owner: `crussella0129`
-- GitHub: `git@github.com:crussella0129/tescellate.git` (flips to `…/carbide` after user runs `gh repo rename` post-merge — ADR-015)
+- GitHub: `https://github.com/crussella0129/carbide` (`git@github.com:crussella0129/carbide.git`)
 - License: MIT OR Apache-2.0 (dual)
 - Default branch: `main`
