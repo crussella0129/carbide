@@ -257,4 +257,4 @@
 - **Intent:** [INT-0002](../intents/INT-0002-modularize-carbide-ui-app.md)
 - **Completed:** 2026-11-26T17:59:00Z
 - **Files modified:** apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/io.rs, apps/carbide-ui/src/app/dialogs.rs
-- **Commit:** PENDING
+- **Commit:** `fdf4aa920118def3674ec4ac2076c24e669ac896`
