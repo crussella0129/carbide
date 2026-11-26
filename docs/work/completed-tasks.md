@@ -236,4 +236,4 @@
 - **Intent:** [INT-0001](../intents/INT-0001-reentry-ci-restoration-and-hygiene.md)
 - **Completed:** 2026-11-26T17:13:00Z
 - **Files modified:** README.md, CLAUDE.md
-- **Commit:** PENDING
+- **Commit:** `00b87fd1927a01240af0b5ee03d002f5ebe60f49`
