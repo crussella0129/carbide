@@ -156,7 +156,7 @@ fn ribbon_group(
 ) -> Option<RibbonAction> {
     let mut action = None;
     egui::Frame::group(ui.style())
-        .inner_margin(egui::Margin::symmetric(6.0, 3.0))
+        .inner_margin(egui::Margin::symmetric(6, 3))
         .show(ui, |ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -498,7 +498,7 @@ fn group_data(ui: &mut egui::Ui) -> Option<RibbonAction> {
         for func in ["SUM", "AVERAGE", "COUNT", "MIN", "MAX"] {
             if ui.button(func).clicked() {
                 action = Some(RibbonAction::Aggregate(func));
-                ui.close_menu();
+                ui.close();
             }
         }
     });
@@ -692,7 +692,7 @@ pub fn ribbon(
 /// are shown disabled so users can see where they'll live.
 pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<RibbonAction> {
     let mut action = None;
-    egui::menu::bar(ui, |ui| {
+    egui::MenuBar::new().ui(ui, |ui| {
         ui.label(egui::RichText::new("Carbide").strong());
         ui.separator();
         ui.menu_button("File", |ui| {
@@ -706,7 +706,7 @@ pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<Rib
             ui.separator();
             if ui.button("Quit").clicked() {
                 action = Some(RibbonAction::Quit);
-                ui.close_menu();
+                ui.close();
             }
         });
         ui.menu_button("Edit", |ui| {
@@ -715,53 +715,53 @@ pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<Rib
                 .clicked()
             {
                 action = Some(RibbonAction::Undo);
-                ui.close_menu();
+                ui.close();
             }
             if ui
                 .add_enabled(can_redo, egui::Button::new("Redo  Ctrl+Y"))
                 .clicked()
             {
                 action = Some(RibbonAction::Redo);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button("Cut  Ctrl+X").clicked() {
                 action = Some(RibbonAction::Cut);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Copy  Ctrl+C").clicked() {
                 action = Some(RibbonAction::Copy);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Paste  Ctrl+V").clicked() {
                 action = Some(RibbonAction::Paste);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Paste values  Ctrl+Shift+V").clicked() {
                 action = Some(RibbonAction::PasteValues);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button("Find / Replace…  Ctrl+F").clicked() {
                 action = Some(RibbonAction::OpenFind);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Find next  F3").clicked() {
                 action = Some(RibbonAction::FindNext);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Find previous  Shift+F3").clicked() {
                 action = Some(RibbonAction::FindPrev);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button("Select all  Ctrl+A").clicked() {
                 action = Some(RibbonAction::SelectAll);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Select region  Ctrl+Shift+8").clicked() {
                 action = Some(RibbonAction::SelectRegion);
-                ui.close_menu();
+                ui.close();
             }
         });
         ui.menu_button("Insert", |ui| {
@@ -769,14 +769,14 @@ pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<Rib
                 for func in ["SUM", "AVERAGE", "COUNT", "MIN", "MAX"] {
                     if ui.button(func).clicked() {
                         action = Some(RibbonAction::Aggregate(func));
-                        ui.close_menu();
+                        ui.close();
                     }
                 }
             });
             ui.menu_button("Widget", |ui| {
                 if ui.button("Checkbox").clicked() {
                     action = Some(RibbonAction::ToggleWidget);
-                    ui.close_menu();
+                    ui.close();
                 }
                 ui.add_enabled(false, egui::Button::new("Button (coming soon)"));
                 ui.add_enabled(false, egui::Button::new("Switch (coming soon)"));
@@ -785,7 +785,7 @@ pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<Rib
             ui.separator();
             if ui.button("Note for active cell…").clicked() {
                 action = Some(RibbonAction::OpenNote);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             ui.add_enabled(false, egui::Button::new("Function… (coming soon)"));
@@ -801,112 +801,112 @@ pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<Rib
         ui.menu_button("Format", |ui| {
             if ui.button("Bold  Ctrl+B").clicked() {
                 action = Some(RibbonAction::ToggleBold);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Italic  Ctrl+I").clicked() {
                 action = Some(RibbonAction::ToggleItalic);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Underline  Ctrl+U").clicked() {
                 action = Some(RibbonAction::ToggleUnderline);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Strikethrough").clicked() {
                 action = Some(RibbonAction::ToggleStrikethrough);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             ui.menu_button("Align", |ui| {
                 if ui.button("Left").clicked() {
                     action = Some(RibbonAction::SetAlign(HAlign::Left));
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("Center").clicked() {
                     action = Some(RibbonAction::SetAlign(HAlign::Center));
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("Right").clicked() {
                     action = Some(RibbonAction::SetAlign(HAlign::Right));
-                    ui.close_menu();
+                    ui.close();
                 }
                 ui.separator();
                 if ui.button("Top").clicked() {
                     action = Some(RibbonAction::SetVAlign(VAlign::Top));
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("Middle").clicked() {
                     action = Some(RibbonAction::SetVAlign(VAlign::Middle));
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("Bottom").clicked() {
                     action = Some(RibbonAction::SetVAlign(VAlign::Bottom));
-                    ui.close_menu();
+                    ui.close();
                 }
             });
             ui.menu_button("Borders", |ui| {
                 if ui.button("All").clicked() {
                     action = Some(RibbonAction::SetBorders(BorderMode::All));
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("Outer").clicked() {
                     action = Some(RibbonAction::SetBorders(BorderMode::Outer));
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("None").clicked() {
                     action = Some(RibbonAction::SetBorders(BorderMode::None));
-                    ui.close_menu();
+                    ui.close();
                 }
             });
             ui.menu_button("Number format", |ui| {
                 for &(format, label) in NUMBER_FORMATS {
                     if ui.button(label).clicked() {
                         action = Some(RibbonAction::SetNumber(format));
-                        ui.close_menu();
+                        ui.close();
                     }
                 }
             });
             ui.separator();
             if ui.button("Wrap text").clicked() {
                 action = Some(RibbonAction::ToggleWrapText);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Negative red").clicked() {
                 action = Some(RibbonAction::ToggleNegativeRed);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Format painter").clicked() {
                 action = Some(RibbonAction::ToggleFormatPainter);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button("Conditional formatting…").clicked() {
                 action = Some(RibbonAction::OpenConditional);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Toggle checkbox").clicked() {
                 action = Some(RibbonAction::ToggleWidget);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Clear format").clicked() {
                 action = Some(RibbonAction::ClearFormat);
-                ui.close_menu();
+                ui.close();
             }
         });
         ui.menu_button("Data", |ui| {
             if ui.button("Sort ascending").clicked() {
                 action = Some(RibbonAction::SortAscending);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Sort descending").clicked() {
                 action = Some(RibbonAction::SortDescending);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             ui.menu_button("AutoSum", |ui| {
                 for func in ["SUM", "AVERAGE", "COUNT", "MIN", "MAX"] {
                     if ui.button(func).clicked() {
                         action = Some(RibbonAction::Aggregate(func));
-                        ui.close_menu();
+                        ui.close();
                     }
                 }
             });
@@ -919,20 +919,20 @@ pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<Rib
         ui.menu_button("View", |ui| {
             if ui.button("Toggle theme").clicked() {
                 action = Some(RibbonAction::ToggleTheme);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button("Zoom in").clicked() {
                 action = Some(RibbonAction::ZoomIn);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Zoom out").clicked() {
                 action = Some(RibbonAction::ZoomOut);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Reset zoom").clicked() {
                 action = Some(RibbonAction::ResetZoom);
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             ui.add_enabled(false, egui::Button::new("Show formula bar (always on)"));
@@ -943,11 +943,11 @@ pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<Rib
         ui.menu_button("Help", |ui| {
             if ui.button("Keyboard shortcuts  F1").clicked() {
                 action = Some(RibbonAction::OpenHelp);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("About Carbide…").clicked() {
                 action = Some(RibbonAction::OpenAbout);
-                ui.close_menu();
+                ui.close();
             }
         });
     });

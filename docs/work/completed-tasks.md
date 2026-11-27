@@ -313,3 +313,11 @@
 - **Completed:** 2026-11-27T01:28:30Z
 - **Files modified:** crates/carbide-formula/Cargo.toml, crates/carbide-formula/src/python/mod.rs, Cargo.lock
 - **Commit:** `3f798c33dadddb8ba98ff27aab6b3a9252b87fa1`
+
+
+## T-003 (sprint 15)
+- **Description:** Upgrade `rfd` (`0.14` → `0.18`, dropping ADR-003's wasm32 `gtk3` workaround and updating stale comments + `decisions-legacy.md`) and `egui`/`eframe` (`0.29` → `0.37`, adopting upstream defaults and migrating `App::ui`, `egui::Panel`, `Tooltip::always_open`, `MenuBar`, `ui.close()`, `Margin::symmetric`, `StrokeKind`, and `TextEdit`), verified green with zero warnings across native clippy/tests (315/315), `wasm32-unknown-unknown` clippy `-D warnings` + build, max 819 lines, and zero `allow` attributes.
+- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
+- **Completed:** 2026-11-27T01:39:45Z
+- **Files modified:** apps/carbide-ui/Cargo.toml, apps/carbide-ui/Cargo.lock, apps/carbide-ui/src/ribbon.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_triangle.rs, apps/carbide-ui/src/app/render_voronoi.rs, docs/history/decisions-legacy.md
+- **Commit:** PENDING

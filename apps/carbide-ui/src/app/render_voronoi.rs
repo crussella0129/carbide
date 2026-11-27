@@ -155,28 +155,28 @@ impl CarbideApp {
         response.context_menu(|ui| {
             if ui.button("Copy").clicked() {
                 self.copy_selection(ui.ctx());
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Cut").clicked() {
                 self.cut_selection(ui.ctx());
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Paste").clicked() {
                 self.paste(PasteMode::Normal);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Paste values").clicked() {
                 self.paste(PasteMode::ValuesOnly);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Clear").clicked() {
                 self.clear_active();
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button("Edit note…").clicked() {
                 self.open_note(CellId::Voronoi(self.voronoi.selection.cursor));
-                ui.close_menu();
+                ui.close();
             }
         });
 
@@ -186,20 +186,26 @@ impl CarbideApp {
             if let Some(coord) = self.voronoi_lattice.cell_at(local) {
                 if let CellValue::Error(e) = self.voronoi_cell_value(coord) {
                     let detail = error_detail(&e);
-                    egui::show_tooltip_at_pointer(
-                        ui.ctx(),
+                    egui::Tooltip::always_open(
+                        ui.ctx().clone(),
                         ui.layer_id(),
-                        egui::Id::new("voronoi_error_tooltip"),
-                        |ui| ui.label(detail),
-                    );
+                        egui::Id::unique("voronoi_error_tooltip"),
+                        egui::PopupAnchor::Pointer,
+                    )
+                    .show(|ui| {
+                        ui.label(detail);
+                    });
                 } else if self.voronoi_notes.has(coord) {
                     let note = self.voronoi_notes.get(coord).to_string();
-                    egui::show_tooltip_at_pointer(
-                        ui.ctx(),
+                    egui::Tooltip::always_open(
+                        ui.ctx().clone(),
                         ui.layer_id(),
-                        egui::Id::new("voronoi_note_tooltip"),
-                        |ui| ui.label(note),
-                    );
+                        egui::Id::unique("voronoi_note_tooltip"),
+                        egui::PopupAnchor::Pointer,
+                    )
+                    .show(|ui| {
+                        ui.label(note);
+                    });
                 }
             }
         }
@@ -349,6 +355,7 @@ impl CarbideApp {
                     rect,
                     0.0,
                     egui::Stroke::new(1.5_f32, egui::Color32::from_rgb(70, 120, 220)),
+                    egui::StrokeKind::Inside,
                 );
             }
         }
@@ -470,7 +477,7 @@ impl CarbideApp {
                     );
                     ui.interact(
                         handle_rect,
-                        ui.id().with(("vor_seed", i)),
+                        ui.scope_id().with(("vor_seed", i)),
                         egui::Sense::drag(),
                     )
                 })
@@ -532,9 +539,7 @@ impl CarbideApp {
             let rect = egui::Rect::from_center_size(center, egui::vec2(160.0, 24.0));
             let response = ui.put(
                 rect,
-                egui::TextEdit::singleline(&mut edit.buffer)
-                    .frame(true)
-                    .font(egui::TextStyle::Monospace),
+                egui::TextEdit::singleline(&mut edit.buffer).font(egui::TextStyle::Monospace),
             );
             if std::mem::take(&mut edit.fresh) {
                 response.request_focus();

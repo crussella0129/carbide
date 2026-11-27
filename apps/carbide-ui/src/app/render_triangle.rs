@@ -365,9 +365,7 @@ impl CarbideApp {
             let rect = egui::Rect::from_center_size(center, egui::vec2(1.4 * TRIANGLE_SIDE, 24.0));
             let response = ui.put(
                 rect,
-                egui::TextEdit::singleline(&mut edit.buffer)
-                    .frame(true)
-                    .font(egui::TextStyle::Monospace),
+                egui::TextEdit::singleline(&mut edit.buffer).font(egui::TextStyle::Monospace),
             );
             if std::mem::take(&mut edit.fresh) {
                 response.request_focus();

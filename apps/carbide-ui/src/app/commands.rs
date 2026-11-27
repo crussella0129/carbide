@@ -28,7 +28,7 @@ impl CarbideApp {
         // A focused text input that is not the in-cell editor — the
         // formula bar, or a dialog field — owns the keyboard; don't also
         // read its keystrokes as cell commands.
-        if self.edit.is_none() && ctx.wants_keyboard_input() {
+        if self.edit.is_none() && ctx.egui_wants_keyboard_input() {
             return Vec::new();
         }
         let mode = self.mode();

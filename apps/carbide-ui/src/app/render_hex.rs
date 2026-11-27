@@ -237,46 +237,46 @@ impl CarbideApp {
         response.context_menu(|ui| {
             if ui.button("Copy").clicked() {
                 self.copy_selection(ui.ctx());
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Cut").clicked() {
                 self.cut_selection(ui.ctx());
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Paste").clicked() {
                 self.paste(PasteMode::Normal);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Paste values").clicked() {
                 self.paste(PasteMode::ValuesOnly);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Clear").clicked() {
                 self.clear_active();
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button("Select region").clicked() {
                 self.select_region();
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Fill series").clicked() {
                 self.fill_series();
-                ui.close_menu();
+                ui.close();
             }
             ui.menu_button("Sort", |ui| {
                 if ui.button("Ascending").clicked() {
                     self.sort_selection(true);
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("Descending").clicked() {
                     self.sort_selection(false);
-                    ui.close_menu();
+                    ui.close();
                 }
             });
             if ui.button("Edit note…").clicked() {
                 self.open_note(CellId::Hex(self.hex.selection.cursor));
-                ui.close_menu();
+                ui.close();
             }
         });
         // A hovered hex shows its error detail, or failing that its note.
@@ -286,20 +286,26 @@ impl CarbideApp {
                 if hex_in_view(coord) {
                     if let CellValue::Error(e) = self.hex_cell_value(coord) {
                         let detail = error_detail(&e);
-                        egui::show_tooltip_at_pointer(
-                            ui.ctx(),
+                        egui::Tooltip::always_open(
+                            ui.ctx().clone(),
                             ui.layer_id(),
-                            egui::Id::new("hex_error_tooltip"),
-                            |ui| ui.label(detail),
-                        );
+                            egui::Id::unique("hex_error_tooltip"),
+                            egui::PopupAnchor::Pointer,
+                        )
+                        .show(|ui| {
+                            ui.label(detail);
+                        });
                     } else if self.hex_notes.has(coord) {
                         let note = self.hex_notes.get(coord).to_string();
-                        egui::show_tooltip_at_pointer(
-                            ui.ctx(),
+                        egui::Tooltip::always_open(
+                            ui.ctx().clone(),
                             ui.layer_id(),
-                            egui::Id::new("hex_note_tooltip"),
-                            |ui| ui.label(note),
-                        );
+                            egui::Id::unique("hex_note_tooltip"),
+                            egui::PopupAnchor::Pointer,
+                        )
+                        .show(|ui| {
+                            ui.label(note);
+                        });
                     }
                 }
             }
@@ -460,9 +466,7 @@ impl CarbideApp {
             let rect = egui::Rect::from_center_size(center, egui::vec2(1.6 * HEX_SIZE, 24.0));
             let response = ui.put(
                 rect,
-                egui::TextEdit::singleline(&mut edit.buffer)
-                    .frame(true)
-                    .font(egui::TextStyle::Monospace),
+                egui::TextEdit::singleline(&mut edit.buffer).font(egui::TextStyle::Monospace),
             );
             if std::mem::take(&mut edit.fresh) {
                 response.request_focus();

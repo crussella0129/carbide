@@ -87,20 +87,26 @@ impl CarbideApp {
             {
                 if let CellValue::Error(e) = self.cell_value(cell.0, cell.1) {
                     let detail = error_detail(&e);
-                    egui::show_tooltip_at_pointer(
-                        ui.ctx(),
+                    egui::Tooltip::always_open(
+                        ui.ctx().clone(),
                         ui.layer_id(),
-                        egui::Id::new("cell_error_tooltip"),
-                        |ui| ui.label(detail),
-                    );
+                        egui::Id::unique("cell_error_tooltip"),
+                        egui::PopupAnchor::Pointer,
+                    )
+                    .show(|ui| {
+                        ui.label(detail);
+                    });
                 } else if self.notes.has(cell) {
                     let note = self.notes.get(cell).to_string();
-                    egui::show_tooltip_at_pointer(
-                        ui.ctx(),
+                    egui::Tooltip::always_open(
+                        ui.ctx().clone(),
                         ui.layer_id(),
-                        egui::Id::new("cell_note_tooltip"),
-                        |ui| ui.label(note),
-                    );
+                        egui::Id::unique("cell_note_tooltip"),
+                        egui::PopupAnchor::Pointer,
+                    )
+                    .show(|ui| {
+                        ui.label(note);
+                    });
                 }
             }
         }
@@ -360,50 +366,50 @@ impl CarbideApp {
         response.context_menu(|ui| {
             if ui.button("Copy").clicked() {
                 self.copy_selection(ui.ctx());
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Cut").clicked() {
                 self.cut_selection(ui.ctx());
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Paste").clicked() {
                 self.paste(PasteMode::Normal);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Paste values").clicked() {
                 self.paste(PasteMode::ValuesOnly);
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Clear").clicked() {
                 self.clear_active();
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button("Select region").clicked() {
                 self.select_region();
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Toggle checkbox").clicked() {
                 self.toggle_widget_cells();
-                ui.close_menu();
+                ui.close();
             }
             if ui.button("Fill series").clicked() {
                 self.fill_series();
-                ui.close_menu();
+                ui.close();
             }
             ui.menu_button("Sort", |ui| {
                 if ui.button("Ascending").clicked() {
                     self.sort_selection(true);
-                    ui.close_menu();
+                    ui.close();
                 }
                 if ui.button("Descending").clicked() {
                     self.sort_selection(false);
-                    ui.close_menu();
+                    ui.close();
                 }
             });
             if ui.button("Edit note…").clicked() {
                 self.open_note(CellId::Square(self.square.selection.cursor));
-                ui.close_menu();
+                ui.close();
             }
         });
 
@@ -458,7 +464,7 @@ impl CarbideApp {
                 if self.find.is_match(CellId::Square((c, r))) {
                     painter.rect_filled(rect, 0.0, find_tint);
                 }
-                painter.rect_stroke(rect, 0.0, grid_line);
+                painter.rect_stroke(rect, 0.0, grid_line, egui::StrokeKind::Inside);
                 if editing_cell == Some((c, r)) {
                     continue;
                 }
@@ -520,6 +526,7 @@ impl CarbideApp {
                 egui::Rect::from_min_max(tl.min, br.max),
                 0.0,
                 egui::Stroke::new(1.5_f32, sel_color),
+                egui::StrokeKind::Inside,
             );
         }
         // The active-cell ring.
@@ -528,13 +535,19 @@ impl CarbideApp {
             self.metrics.cell_rect(origin, sc, sr),
             0.0,
             egui::Stroke::new(2.0_f32, sel_color),
+            egui::StrokeKind::Inside,
         );
 
         // The fill handle — a small filled square at the bottom-right
         // of the selection's bounding rect. The hit-test zone is wider
         // than the drawn square so near-misses still grab.
         painter.rect_filled(fill_handle_visual, 0.0, sel_color);
-        painter.rect_stroke(fill_handle_visual, 0.0, egui::Stroke::new(1.0_f32, cell_bg));
+        painter.rect_stroke(
+            fill_handle_visual,
+            0.0,
+            egui::Stroke::new(1.0_f32, cell_bg),
+            egui::StrokeKind::Inside,
+        );
 
         // The cut marquee — a dashed border around the armed range, when
         // the clipboard's cut belongs to this (square) sheet.
@@ -682,9 +695,7 @@ impl CarbideApp {
             let rect = self.metrics.cell_rect(origin, sc, sr);
             let response = ui.put(
                 rect,
-                egui::TextEdit::singleline(&mut edit.buffer)
-                    .frame(true)
-                    .font(egui::TextStyle::Monospace),
+                egui::TextEdit::singleline(&mut edit.buffer).font(egui::TextStyle::Monospace),
             );
             if std::mem::take(&mut edit.fresh) {
                 response.request_focus();
@@ -716,7 +727,7 @@ impl CarbideApp {
                 if r == self.square.selection.cursor.1 {
                     painter.rect_filled(rect, 0.0, sel_tint);
                 }
-                painter.rect_stroke(rect, 0.0, grid_line);
+                painter.rect_stroke(rect, 0.0, grid_line, egui::StrokeKind::Inside);
                 painter.text(
                     rect.center(),
                     egui::Align2::CENTER_CENTER,
@@ -736,7 +747,7 @@ impl CarbideApp {
                 if c == self.square.selection.cursor.0 {
                     painter.rect_filled(rect, 0.0, sel_tint);
                 }
-                painter.rect_stroke(rect, 0.0, grid_line);
+                painter.rect_stroke(rect, 0.0, grid_line, egui::StrokeKind::Inside);
                 painter.text(
                     rect.center(),
                     egui::Align2::CENTER_CENTER,
@@ -752,7 +763,7 @@ impl CarbideApp {
                 egui::vec2(grid::HEADER_W, grid::HEADER_H),
             );
             painter.rect_filled(corner_rect, 0.0, header_bg);
-            painter.rect_stroke(corner_rect, 0.0, grid_line);
+            painter.rect_stroke(corner_rect, 0.0, grid_line, egui::StrokeKind::Inside);
         }
     }
 }
