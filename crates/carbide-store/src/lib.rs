@@ -21,6 +21,8 @@
 //! `formulas/native/<hash>.rs` for cached Rust compilations, and
 //! `trust.json` for the native-formula trust manifest.
 
+pub mod import;
+
 use carbide_core::{EngineKind, Workbook};
 use serde::{Deserialize, Serialize};
 use std::io::{Cursor, Read, Seek, Write};
@@ -73,6 +75,10 @@ pub enum StoreError {
     Zip(#[from] zip::result::ZipError),
     #[error("json: {0}")]
     Json(#[from] serde_json::Error),
+    #[error("csv: {0}")]
+    Csv(#[from] csv::Error),
+    #[error("xlsx: {0}")]
+    Xlsx(#[from] calamine::XlsxError),
     #[error("format: {0}")]
     Format(String),
     #[error("unsupported format version {0}, this build supports {FORMAT_VERSION}")]

@@ -329,3 +329,36 @@
 - **Completed:** 2026-11-27T01:40:40Z
 - **Files modified:** Cargo.toml, apps/carbide-ui/Cargo.toml, .github/dependabot.yml
 - **Commit:** `be8b12d6a629da384768cfc60d6851b781435c85`
+
+
+## T-001 (sprint 16)
+- **Description:** Add `csv 1.4`, `calamine 0.38`, and `carbide-tess` to `carbide-store`, align root `[workspace.package].rust-version` to `"1.89"` (`zip 9.8.2`), add `StoreError::{Csv, Xlsx}`, and implement `carbide-store::import::{ImportFormat, detect_import_format, sheet_name_from_filename, import_csv_bytes}` with full unit test coverage (13/13 `carbide-store` tests green, 0 warnings).
+- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
+- **Completed:** 2026-11-27T05:33:50Z
+- **Files modified:** Cargo.toml, Cargo.lock, crates/carbide-store/Cargo.toml, crates/carbide-store/src/lib.rs, crates/carbide-store/src/import.rs
+- **Commit:** `8605d8a8aa319dd413775338163928ee5053dbe6`
+
+
+## T-002 (sprint 16)
+- **Description:** Implement `carbide-store::import::import_xlsx_bytes` via `calamine 0.38` with independent `Range::start()` merging for values and formula-only cells, finite-float guard, literal `"=..."` string safety, `DateTime`/`DateTimeIso` support, full `CellErrorType` mapping, and pure-Rust synthesized multi-sheet `.xlsx` unit tests (16/16 `carbide-store` tests green, 0 warnings).
+- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
+- **Completed:** 2026-11-27T05:35:35Z
+- **Files modified:** crates/carbide-store/src/import.rs
+- **Commit:** `f2abe8baf1de42b8ac540299e4ffc61aad3fcee4`
+
+
+
+## T-003 (sprint 16)
+- **Description:** Wire `WorkbookEngine::{import_csv_bytes, import_xlsx_bytes, import_csv, import_xlsx, replace_sheet_cells}` with stale `native`/`volatile`/`compiled`/`dag` invalidation, cycle-closing `CellError::Cycle` marking, unparseable Excel formula cached-value preservation, sheet-scoped vs. workbook-scoped topological evaluation + unconditional volatile `dirty_closure` pass, and integration tests covering CSV/XLSX eval, `.crbd` round-trip, cycles, volatiles, sibling-sheet isolation, and `--features native` cache invalidation.
+- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
+- **Completed:** 2026-11-27T05:41:00Z
+- **Files modified:** crates/carbide-formula/src/engine.rs, crates/carbide-formula/tests/persistence.rs
+- **Commit:** `55984523e008da564efad46f0c92920275f052b1`
+
+
+## T-004 (sprint 16)
+- **Description:** Enable `File -> Open…` / `Save` and add `File -> Import CSV / Excel…` (`RibbonAction::Import`) in `apps/carbide-ui/src/ribbon.rs`, wire native + `wasm32` `.csv`/`.xlsx` picker and `drain_pending_import` (with `ctx.request_repaint()`, `mark_dirty()`, full stale square/transient state cleanup, sibling tab preservation, dynamic Square tab label, dismissible multi-sheet notice & non-fatal error banner, and headless unit tests) in `apps/carbide-ui/src/app/{mod,demos,commands,io}.rs` (318/318 native UI tests green, `wasm32-unknown-unknown` clippy `-D warnings` & build clean, max 819 lines, zero `allow`s).
+- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
+- **Completed:** 2026-11-27T05:46:40Z
+- **Files modified:** apps/carbide-ui/Cargo.lock, apps/carbide-ui/src/ribbon.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/io.rs
+- **Commit:** `f90cfdd6b5dfa0479f7758513a3186478411beac`

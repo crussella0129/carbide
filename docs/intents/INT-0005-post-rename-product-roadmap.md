@@ -11,7 +11,7 @@
 
 ## Intent
 Capture the primary user-facing capabilities deferred at the end of v161 (ADR-014 / ADR-015) so the user can prioritize and split them into concrete sprint intents once re-entry improvements are settled:
-1. **CSV / `.xlsx` import** (`csv` + `calamine` crates) — next planned post-rename feature per ADR-015.
+1. **CSV / `.xlsx` import** (`csv` + `calamine` crates) — split into [INT-0006](INT-0006-csv-and-xlsx-import.md) for Sprint 16.
 2. **Voronoi editing completeness** — add/delete seeds, bounds editing, and zoom-aware seed drag / widget pop-out (ADR-012 / ADR-014).
 3. **Engine tiers in the GUI** — expose native Carbide compilation (`promote_native`) and Python engine cells directly in `apps/carbide-ui`.
 4. **Headless CLI commands** — turn `crates/carbide-cli` from a `--help` stub into a usable `eval` / `validate` / `recompute` tool.

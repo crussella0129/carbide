@@ -6,6 +6,7 @@
   - [INT-0003: Lattice UI parity and unification](intents/INT-0003-lattice-ui-parity-and-unification.md)
   - [INT-0004: Dependency and toolchain modernization](intents/INT-0004-dependency-and-toolchain-modernization.md)
   - [INT-0005: Post-rename product roadmap](intents/INT-0005-post-rename-product-roadmap.md)
+  - [INT-0006: CSV and .xlsx spreadsheet import](intents/INT-0006-csv-and-xlsx-import.md)
 - [Tasks](work/tasks.md)
 - [Completed tasks](work/completed-tasks.md)
 - [Sprint 0](sprints/s0/sprint-meta.md)
@@ -24,3 +25,4 @@
 - [Sprint 13](sprints/s13/sprint-meta.md)
 - [Sprint 14](sprints/s14/sprint-meta.md)
 - [Sprint 15](sprints/s15/sprint-meta.md)
+- [Sprint 16](sprints/s16/sprint-meta.md)

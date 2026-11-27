@@ -274,6 +274,14 @@ pub struct CarbideApp {
     /// `await`, so the file-picker future writes here and the next frame's
     /// `update` drains the slot.
     pending_open_bytes: std::sync::Arc<std::sync::Mutex<Option<Vec<u8>>>>,
+    /// Bytes + optional filename from a CSV/Excel Import dialog, waiting to
+    /// be applied to the Square sheet on the next frame.
+    pending_import: io::PendingImportSlot,
+    /// Non-fatal informational notice from the most recent import (e.g., when
+    /// an `.xlsx` workbook has multiple sheets and sheet 1 was imported).
+    import_notice: Option<String>,
+    /// Non-fatal error message from the most recent import attempt.
+    import_error: Option<String>,
     /// `true` when an autosave would persist new content. Flipped by
     /// `mark_dirty()` at every user-driven mutation; cleared on autosave
     /// fire and on Open. Seed demos do not flip it (they run before `new`
@@ -294,6 +302,7 @@ impl eframe::App for CarbideApp {
         // this frame's input — the restored state then drives the rest
         // of the update.
         self.drain_pending_open();
+        self.drain_pending_import();
         ctx.set_visuals(if self.dark_mode {
             egui::Visuals::dark()
         } else {
@@ -556,11 +565,36 @@ impl eframe::App for CarbideApp {
                 });
         }
 
+        if !self.stage_mode && (self.import_error.is_some() || self.import_notice.is_some()) {
+            egui::Panel::top("carbide_import_banner").show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    if let Some(err) = self.import_error.clone() {
+                        ui.label(egui::RichText::new(err).color(ui.visuals().error_fg_color));
+                        if ui.small_button("×").on_hover_text("Dismiss").clicked() {
+                            self.import_error = None;
+                        }
+                    } else if let Some(notice) = self.import_notice.clone() {
+                        ui.label(egui::RichText::new(notice).weak());
+                        if ui.small_button("×").on_hover_text("Dismiss").clicked() {
+                            self.import_notice = None;
+                        }
+                    }
+                });
+            });
+        }
+
         if !self.stage_mode {
             egui::Panel::bottom("carbide_sheet_tabs").show(ui, |ui| {
                 ui.horizontal(|ui| {
+                    let square_tab_name = self
+                        .engine
+                        .workbook
+                        .sheets
+                        .get(&self.square.sheet_id)
+                        .map(|s| s.name.clone())
+                        .unwrap_or_else(|| "Budget".to_string());
                     if ui
-                        .selectable_label(self.active == ActiveSheet::Square, "Budget")
+                        .selectable_label(self.active == ActiveSheet::Square, &square_tab_name)
                         .clicked()
                     {
                         self.commit_edit();

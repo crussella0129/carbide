@@ -318,6 +318,7 @@ impl CarbideApp {
             RibbonAction::OpenAbout => self.about_open = true,
             RibbonAction::Save => self.handle_save(false),
             RibbonAction::Open => self.handle_open(),
+            RibbonAction::Import => self.handle_import(ctx),
             RibbonAction::ToggleVoronoiFreeze => {
                 let sid = self.voronoi.sheet_id;
                 let now = self.engine.voronoi_frozen(sid);

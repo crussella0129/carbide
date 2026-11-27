@@ -13,8 +13,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 carbide-core = { workspace = true }
-zip = { version = "2", default-features = false, features = ["deflate"] }
-
-[dev-dependencies]
 carbide-tess = { workspace = true }
 hashbrown = { workspace = true }
+zip = { version = "9", default-features = false, features = ["deflate"] }
+csv = "1.4"
+calamine = "0.38"

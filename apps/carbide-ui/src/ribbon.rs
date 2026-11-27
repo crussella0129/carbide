@@ -104,6 +104,8 @@ pub enum RibbonAction {
     Save,
     /// Open a workbook (Ctrl+O).
     Open,
+    /// Import a `.csv` or `.xlsx` spreadsheet into the Square sheet.
+    Import,
     /// Toggle the Voronoi sheet's frozen-seeds flag (ADR-014). Locks /
     /// unlocks the seed-handle drag + proximity-fade.
     ToggleVoronoiFreeze,
@@ -688,8 +690,7 @@ pub fn ribbon(
 /// Draw the application's menu bar — File / Edit / Insert / Format /
 /// Data / View / Help — above the ribbon. Each menu item dispatches an
 /// existing [`RibbonAction`] so the menu and ribbon share handlers in
-/// `app.rs`. `File` entries that need engine support (Save/Open/Export)
-/// are shown disabled so users can see where they'll live.
+/// `app/commands.rs`.
 pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<RibbonAction> {
     let mut action = None;
     egui::MenuBar::new().ui(ui, |ui| {
@@ -697,12 +698,21 @@ pub fn menu_bar(ui: &mut egui::Ui, can_undo: bool, can_redo: bool) -> Option<Rib
         ui.separator();
         ui.menu_button("File", |ui| {
             ui.add_enabled(false, egui::Button::new("New"));
-            ui.add_enabled(false, egui::Button::new("Open…"));
-            ui.add_enabled(false, egui::Button::new("Save"));
+            if ui.button("Open…  Ctrl+O").clicked() {
+                action = Some(RibbonAction::Open);
+                ui.close();
+            }
+            if ui.button("Save  Ctrl+S").clicked() {
+                action = Some(RibbonAction::Save);
+                ui.close();
+            }
             ui.add_enabled(false, egui::Button::new("Save As…"));
             ui.separator();
+            if ui.button("Import CSV / Excel…").clicked() {
+                action = Some(RibbonAction::Import);
+                ui.close();
+            }
             ui.add_enabled(false, egui::Button::new("Export…"));
-            ui.label(egui::RichText::new("(Save/Open need engine support)").weak());
             ui.separator();
             if ui.button("Quit").clicked() {
                 action = Some(RibbonAction::Quit);
