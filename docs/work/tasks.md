@@ -1,11 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-### T-001: Upgrade root workspace `hashbrown` (`0.17`), `glam` (`0.34`), and `thiserror` (`2`)
-- **Status:** pending
-- **Sprint:** 15
-- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
-- **Build plan:** [s15 build-plan.md](../sprints/s15/sprint-plans/build-plan.md#t-001-upgrade-root-workspace-hashbrown-017-glam-034-and-thiserror-2)
-
 ### T-002: Upgrade `pyo3` (`0.30`) and `libloading` (`0.9`) in `carbide-formula`
 - **Status:** pending
 - **Sprint:** 15

@@ -297,3 +297,11 @@
 - **Completed:** 2026-11-26T18:40:20Z
 - **Files modified:** apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/io.rs
 - **Commit:** `abe5e580c0f7e1438892fccea31f5a90edf8a5d6`
+
+
+## T-001 (sprint 15)
+- **Description:** Upgrade root workspace `hashbrown` (`0.14` → `0.17`), `glam` (`0.27` → `0.34`), and `thiserror` (`1` → `2`), deduplicating `hashbrown` to a single `0.17.1` line in `Cargo.lock` with all 331 workspace + 315 UI tests passing and zero warnings.
+- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
+- **Completed:** 2026-11-27T01:26:05Z
+- **Files modified:** Cargo.toml, Cargo.lock, apps/carbide-ui/Cargo.lock
+- **Commit:** PENDING
