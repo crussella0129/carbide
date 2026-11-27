@@ -320,4 +320,4 @@
 - **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
 - **Completed:** 2026-11-27T01:39:45Z
 - **Files modified:** apps/carbide-ui/Cargo.toml, apps/carbide-ui/Cargo.lock, apps/carbide-ui/src/ribbon.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_triangle.rs, apps/carbide-ui/src/app/render_voronoi.rs, docs/history/decisions-legacy.md
-- **Commit:** PENDING
+- **Commit:** `34e523b26b905a51bc099816685d530fa5a53d4f`
