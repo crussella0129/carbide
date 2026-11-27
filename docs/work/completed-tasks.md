@@ -353,4 +353,4 @@
 - **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
 - **Completed:** 2026-11-27T05:41:00Z
 - **Files modified:** crates/carbide-formula/src/engine.rs, crates/carbide-formula/tests/persistence.rs
-- **Commit:** PENDING
+- **Commit:** `55984523e008da564efad46f0c92920275f052b1`
