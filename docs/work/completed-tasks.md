@@ -328,4 +328,4 @@
 - **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
 - **Completed:** 2026-11-27T01:40:40Z
 - **Files modified:** Cargo.toml, apps/carbide-ui/Cargo.toml, .github/dependabot.yml
-- **Commit:** PENDING
+- **Commit:** `be8b12d6a629da384768cfc60d6851b781435c85`
