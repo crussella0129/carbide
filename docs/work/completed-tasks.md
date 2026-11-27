@@ -312,4 +312,4 @@
 - **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
 - **Completed:** 2026-11-27T01:28:30Z
 - **Files modified:** crates/carbide-formula/Cargo.toml, crates/carbide-formula/src/python/mod.rs, Cargo.lock
-- **Commit:** PENDING
+- **Commit:** `3f798c33dadddb8ba98ff27aab6b3a9252b87fa1`
