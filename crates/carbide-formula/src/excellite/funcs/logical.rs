@@ -55,7 +55,7 @@ pub fn xor(args: &[Expr], ctx: &dyn EvalCtx) -> Result<CellValue, EvalError> {
 
 /// IFS(cond1, val1, cond2, val2, ...). First true cond wins.
 pub fn ifs(args: &[Expr], ctx: &dyn EvalCtx) -> Result<CellValue, EvalError> {
-    if args.is_empty() || args.len() % 2 != 0 {
+    if args.is_empty() || !args.len().is_multiple_of(2) {
         return Err(EvalError::BadArity {
             name: "IFS".into(),
             want: "even, >=2".into(),
