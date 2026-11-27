@@ -336,4 +336,4 @@
 - **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
 - **Completed:** 2026-11-27T05:33:50Z
 - **Files modified:** Cargo.toml, Cargo.lock, crates/carbide-store/Cargo.toml, crates/carbide-store/src/lib.rs, crates/carbide-store/src/import.rs
-- **Commit:** PENDING
+- **Commit:** `8605d8a8aa319dd413775338163928ee5053dbe6`
