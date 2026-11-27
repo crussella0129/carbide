@@ -2,7 +2,7 @@
 
 <!-- sprint-loop-intent-v2 -->
 - **Intent ID:** INT-0006
-- **State:** planned
+- **State:** active
 - **Work evidence:** [Sprint 16 build-plan.md](../sprints/s16/sprint-plans/build-plan.md) (`T-001`–`T-004`)
 - **Completion evidence:** none
 - **Code evidence:** none
@@ -30,3 +30,4 @@ Users evaluating Carbide after the rename need a direct way to bring real tabula
 ## Transition history
 - 2026-11-27: split from `INT-0005` item 1 (ADR-015 post-rename item) as `proposed` during Sprint 16 Research Phase.
 - 2026-11-27: `proposed` → `planned` (Sprint 16 Plan Phase: `T-001`–`T-004` in `docs/sprints/s16/sprint-plans/build-plan.md`).
+- 2026-11-27: `planned` → `active` (Sprint 16 Build Phase started).
