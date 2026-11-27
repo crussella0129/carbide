@@ -304,4 +304,4 @@
 - **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
 - **Completed:** 2026-11-27T01:26:05Z
 - **Files modified:** Cargo.toml, Cargo.lock, apps/carbide-ui/Cargo.lock
-- **Commit:** PENDING
+- **Commit:** `23a3ee58d9784b27ec75805f054d8e6efcbbb65e`
