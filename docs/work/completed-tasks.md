@@ -345,3 +345,12 @@
 - **Completed:** 2026-11-27T05:35:35Z
 - **Files modified:** crates/carbide-store/src/import.rs
 - **Commit:** `f2abe8baf1de42b8ac540299e4ffc61aad3fcee4`
+
+
+
+## T-003 (sprint 16)
+- **Description:** Wire `WorkbookEngine::{import_csv_bytes, import_xlsx_bytes, import_csv, import_xlsx, replace_sheet_cells}` with stale `native`/`volatile`/`compiled`/`dag` invalidation, cycle-closing `CellError::Cycle` marking, unparseable Excel formula cached-value preservation, sheet-scoped vs. workbook-scoped topological evaluation + unconditional volatile `dirty_closure` pass, and integration tests covering CSV/XLSX eval, `.crbd` round-trip, cycles, volatiles, sibling-sheet isolation, and `--features native` cache invalidation.
+- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
+- **Completed:** 2026-11-27T05:41:00Z
+- **Files modified:** crates/carbide-formula/src/engine.rs, crates/carbide-formula/tests/persistence.rs
+- **Commit:** PENDING

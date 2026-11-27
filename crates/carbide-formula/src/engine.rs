@@ -129,10 +129,85 @@ impl WorkbookEngine {
         self.workbook = workbook;
         self.dag = Dag::new();
         self.compiled.clear();
+        self.volatile.clear();
         #[cfg(feature = "native")]
         self.native.clear();
         self.rebuild_dag()?;
         Ok(ui)
+    }
+
+    /// Replace the current workbook with an imported UTF-8 CSV payload,
+    /// rebuild the DAG, and evaluate all imported formulas.
+    pub fn import_csv_bytes(
+        &mut self,
+        bytes: &[u8],
+        sheet_name: &str,
+    ) -> Result<Vec<SheetId>, SetCellError> {
+        let workbook = carbide_store::import::import_csv_bytes(bytes, sheet_name)
+            .map_err(|e| SetCellError::Io(e.to_string()))?;
+        self.load_imported_workbook(workbook)
+    }
+
+    /// Replace the current workbook with an imported `.xlsx` payload,
+    /// rebuild the DAG, and evaluate all imported formulas across all sheets.
+    pub fn import_xlsx_bytes(&mut self, bytes: &[u8]) -> Result<Vec<SheetId>, SetCellError> {
+        let workbook = carbide_store::import::import_xlsx_bytes(bytes)
+            .map_err(|e| SetCellError::Io(e.to_string()))?;
+        self.load_imported_workbook(workbook)
+    }
+
+    /// Path-based wrapper over [`Self::import_csv_bytes`] for native callers.
+    pub fn import_csv(&mut self, path: &std::path::Path) -> Result<Vec<SheetId>, SetCellError> {
+        let bytes = std::fs::read(path).map_err(|e| SetCellError::Io(e.to_string()))?;
+        let name = carbide_store::import::sheet_name_from_filename(path.to_str());
+        self.import_csv_bytes(&bytes, &name)
+    }
+
+    /// Path-based wrapper over [`Self::import_xlsx_bytes`] for native callers.
+    pub fn import_xlsx(&mut self, path: &std::path::Path) -> Result<Vec<SheetId>, SetCellError> {
+        let bytes = std::fs::read(path).map_err(|e| SetCellError::Io(e.to_string()))?;
+        self.import_xlsx_bytes(&bytes)
+    }
+
+    fn load_imported_workbook(&mut self, workbook: Workbook) -> Result<Vec<SheetId>, SetCellError> {
+        let order = workbook.sheet_order.clone();
+        self.workbook = workbook;
+        self.dag = Dag::new();
+        self.compiled.clear();
+        self.volatile.clear();
+        #[cfg(feature = "native")]
+        self.native.clear();
+        self.rebuild_dag()?;
+        self.evaluate_sheet_formulas(None);
+        Ok(order)
+    }
+
+    /// Replace the cells (and optionally the name) of `sheet` in-place while
+    /// keeping every sibling sheet completely untouched. Clears any stale
+    /// native-compiled programs for `sheet`, rebuilds the DAG/volatile index,
+    /// and evaluates only `sheet`'s formulas (so sibling sheets with volatile
+    /// or random formulas like `RANDBETWEEN` are never mutated).
+    pub fn replace_sheet_cells(
+        &mut self,
+        sheet: SheetId,
+        name: Option<String>,
+        cells: HashMap<String, Cell>,
+    ) -> Result<(), SetCellError> {
+        let Some(target) = self.workbook.sheets.get_mut(&sheet) else {
+            return Err(SetCellError::NoSheet(sheet));
+        };
+        if let Some(new_name) = name {
+            target.name = new_name;
+        }
+        target.cells = cells;
+        #[cfg(feature = "native")]
+        self.native.retain(|k, _| k.sheet != sheet);
+        self.dag = Dag::new();
+        self.compiled.clear();
+        self.volatile.clear();
+        self.rebuild_dag()?;
+        self.evaluate_sheet_formulas(Some(sheet));
+        Ok(())
     }
 
     /// Persist the workbook to a `.crbd` zip at `path`. Path-based wrapper
@@ -152,6 +227,7 @@ impl WorkbookEngine {
     }
 
     fn rebuild_dag(&mut self) -> Result<(), SetCellError> {
+        self.volatile.clear();
         // Snapshot the (sheet, addr, source) tuples we need to re-parse so
         // we can mutate self.dag / self.compiled without aliasing the
         // workbook. Iterate by sheet to keep the lattice handle local.
@@ -187,7 +263,7 @@ impl WorkbookEngine {
                 .ok_or(SetCellError::NoEngine(engine_kind))?;
             let compiled = match engine.parse(&source) {
                 Ok(c) => c,
-                Err(_) => continue, // skip cells with stale parse errors; they keep their saved value
+                Err(_) => continue, // skip cells with stale/unsupported syntax; they keep their saved value
             };
             let refs = engine.refs(&compiled);
             let cref = CellRef::new(sheet_id, addr.clone());
@@ -223,14 +299,78 @@ impl WorkbookEngine {
                     }
                 }
             }
-            // Cycles in saved data shouldn't have been possible at save time,
-            // but be defensive: skip cells that would introduce one.
+            // Mark cycle-closing formulas explicitly as `CellError::Cycle`
+            // (keeping their raw source) rather than leaving them unevaluated.
             if self.dag.set_deps(&cref, deps).is_err() {
+                self.compiled.remove(&cref);
+                self.volatile.remove(&cref);
+                if let Some(sheet) = self.workbook.sheets.get_mut(&sheet_id) {
+                    if let Some(cell) = sheet.cells.get_mut(&addr) {
+                        cell.value = CellValue::Error(CellError::Cycle);
+                    }
+                }
                 continue;
+            }
+            let up = source.to_ascii_uppercase();
+            if up.contains("OFFSET(") || up.contains("INDIRECT(") {
+                self.volatile.insert(cref.clone());
             }
             self.compiled.insert(cref, compiled);
         }
         Ok(())
+    }
+
+    /// Evaluate compiled formulas in topological order, scoped to `target_sheet`
+    /// when `Some` (or across the entire workbook when `None`), followed by an
+    /// unconditional volatile pass over each volatile cell's `dirty_closure` so
+    /// volatile formulas and their downstream dependents both settle accurately.
+    fn evaluate_sheet_formulas(&mut self, target_sheet: Option<SheetId>) {
+        let targets: Vec<CellRef> = self
+            .compiled
+            .keys()
+            .filter(|c| target_sheet.is_none_or(|s| c.sheet == s))
+            .cloned()
+            .collect();
+        let order = self.dag.topo_order(targets.clone());
+        for c in &order {
+            self.recompute(c);
+        }
+        for c in &targets {
+            if !order.contains(c) {
+                self.recompute(c);
+            }
+        }
+
+        // Unconditional volatile second pass: collect the full dirty closure
+        // of every volatile cell on the target sheet(s) and evaluate in topo
+        // order so both volatile cells and their dependents reflect the settled
+        // static values above.
+        let mut vol_dirty: Vec<CellRef> = Vec::new();
+        let mut seen: std::collections::HashSet<CellRef> = std::collections::HashSet::new();
+        for v in self
+            .volatile
+            .iter()
+            .filter(|c| target_sheet.is_none_or(|s| c.sheet == s))
+            .cloned()
+            .collect::<Vec<_>>()
+        {
+            for d in self.dag.dirty_closure(&v) {
+                if target_sheet.is_none_or(|s| d.sheet == s) && seen.insert(d.clone()) {
+                    vol_dirty.push(d);
+                }
+            }
+        }
+        if !vol_dirty.is_empty() {
+            let vol_order = self.dag.topo_order(vol_dirty.clone());
+            for c in &vol_order {
+                self.recompute(c);
+            }
+            for c in &vol_dirty {
+                if !vol_order.contains(c) {
+                    self.recompute(c);
+                }
+            }
+        }
     }
 
     pub fn add_sheet(&mut self, name: impl Into<String>, lattice: LatticeKind) -> SheetId {
