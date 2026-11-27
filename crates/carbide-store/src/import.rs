@@ -132,7 +132,7 @@ pub fn import_csv_bytes(bytes: &[u8], sheet_name: &str) -> Result<Workbook, Stor
             let addr = lattice.address(SquareCoord { col, row });
             let cell = if field.trim_start().starts_with('=') {
                 Cell {
-                    source: Some(field.to_string()),
+                    source: Some(field.trim_start().to_string()),
                     engine: None,
                     value: CellValue::Empty,
                 }
@@ -282,6 +282,15 @@ fn cell_from_excel_data(data: &Data) -> Option<Cell> {
     }
 }
 
+fn checked_xlsx_coord(start: u32, rel: usize, axis: &str) -> Result<i32, StoreError> {
+    let rel_u32 = u32::try_from(rel)
+        .map_err(|_| StoreError::Format(format!("xlsx exceeds maximum {axis} index")))?;
+    let sum = start
+        .checked_add(rel_u32)
+        .ok_or_else(|| StoreError::Format(format!("xlsx exceeds maximum {axis} index")))?;
+    i32::try_from(sum).map_err(|_| StoreError::Format(format!("xlsx exceeds maximum {axis} index")))
+}
+
 /// Parse `.xlsx` workbook bytes via `calamine` into a multi-sheet
 /// `LatticeKind::Square` [`Workbook`].
 ///
@@ -314,10 +323,8 @@ pub fn import_xlsx_bytes(bytes: &[u8]) -> Result<Workbook, StoreError> {
                 let Some(cell) = cell_from_excel_data(data) else {
                     continue;
                 };
-                let row = i32::try_from(start_r + rel_r as u32)
-                    .map_err(|_| StoreError::Format("xlsx exceeds maximum row index".into()))?;
-                let col = i32::try_from(start_c + rel_c as u32)
-                    .map_err(|_| StoreError::Format("xlsx exceeds maximum column index".into()))?;
+                let row = checked_xlsx_coord(start_r, rel_r, "row")?;
+                let col = checked_xlsx_coord(start_c, rel_c, "column")?;
                 let addr = lattice.address(SquareCoord { col, row });
                 cells.insert(addr, cell);
             }
@@ -335,10 +342,8 @@ pub fn import_xlsx_bytes(bytes: &[u8]) -> Result<Workbook, StoreError> {
                 } else {
                     format!("={trimmed}")
                 };
-                let row = i32::try_from(start_r + rel_r as u32)
-                    .map_err(|_| StoreError::Format("xlsx exceeds maximum row index".into()))?;
-                let col = i32::try_from(start_c + rel_c as u32)
-                    .map_err(|_| StoreError::Format("xlsx exceeds maximum column index".into()))?;
+                let row = checked_xlsx_coord(start_r, rel_r, "row")?;
+                let col = checked_xlsx_coord(start_c, rel_c, "column")?;
                 let addr = lattice.address(SquareCoord { col, row });
                 cells
                     .entry(addr)
@@ -672,6 +677,19 @@ mod tests {
         assert_eq!(nan_cell.source, None);
         let inf_cell = cell_from_excel_data(&Data::Float(f64::INFINITY)).unwrap();
         assert_eq!(inf_cell.value, CellValue::Error(CellError::Num));
+
+        let int_cell = cell_from_excel_data(&Data::Int(42)).unwrap();
+        assert_eq!(int_cell.value, CellValue::Integer(42));
+        assert_eq!(int_cell.source.as_deref(), Some("42"));
+
+        let dur_cell = cell_from_excel_data(&Data::DurationIso("PT1H30M".into())).unwrap();
+        assert_eq!(dur_cell.value, CellValue::Text("PT1H30M".into()));
+        assert_eq!(dur_cell.source.as_deref(), Some("PT1H30M"));
+
+        // Leading whitespace before `=` in CSV is trimmed so ExcelLite parses it.
+        let wb = import_csv_bytes(b"10, =A1*2\n", "Trim").unwrap();
+        let sheet = &wb.sheets[&wb.sheet_order[0]];
+        assert_eq!(sheet.cells["B1"].source.as_deref(), Some("=A1*2"));
     }
 
     #[test]

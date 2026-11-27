@@ -244,7 +244,6 @@ impl CarbideApp {
     pub(super) fn handle_import(&mut self, ctx: &egui::Context) {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let _ = ctx;
             if let Some(path) = rfd::FileDialog::new()
                 .add_filter("Spreadsheets (CSV, Excel)", &["csv", "xlsx"])
                 .pick_file()
@@ -270,6 +269,7 @@ impl CarbideApp {
                         ));
                     }
                 }
+                ctx.request_repaint();
             }
         }
         #[cfg(target_arch = "wasm32")]

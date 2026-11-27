@@ -395,7 +395,7 @@ fn import_csv_bytes_evaluates_volatile_dependents_and_marks_cycles() {
         CellValue::Error(carbide_core::CellError::Cycle)
     );
 
-    // Editing A1 must still recompute volatile B1 and its dependent C1.
+    // Editing A1 must still recompute volatile B1.
     eng.set_cell(sid, "A1", Some("50")).unwrap();
     assert_eq!(
         eng.get_cell(sid, "B1").unwrap().value,
@@ -434,11 +434,15 @@ fn replace_sheet_cells_evaluates_target_and_preserves_sibling_sheets() {
     eng.new_workbook();
     let sq = eng.add_sheet("Budget", LatticeKind::Square);
     let hx = eng.add_sheet("Hex Game", LatticeKind::HexPointy);
+    let tri = eng.add_sheet("Tri demo", LatticeKind::Triangle);
+    let vor = eng.add_sheet("Voronoi", LatticeKind::Voronoi);
 
     eng.set_cell(sq, "A1", Some("=999")).unwrap();
     eng.set_cell(hx, "H(2,2)", Some("=RANDBETWEEN(1, 1000000)"))
         .unwrap();
     eng.set_cell(hx, "H(3,2)", Some("=H(2,2)")).unwrap();
+    eng.set_cell(tri, "T(2,0)", Some("=4")).unwrap();
+    eng.set_cell(vor, "V(2)", Some("=42")).unwrap();
     let hex_roll_before = eng.get_cell(hx, "H(2,2)").unwrap().value;
 
     let imported = carbide_store::import::import_csv_bytes(b"3,4,=A1+B1\n", "Imported").unwrap();
@@ -451,9 +455,46 @@ fn replace_sheet_cells_evaluates_target_and_preserves_sibling_sheets() {
         eng.get_cell(sq, "C1").unwrap().value,
         CellValue::Number(7.0)
     );
-    // Sibling Hex sheet's RANDBETWEEN cell must NOT be re-evaluated.
+    // Sibling Hex (including volatile RANDBETWEEN), Triangle, and Voronoi stay untouched.
     assert_eq!(eng.get_cell(hx, "H(2,2)").unwrap().value, hex_roll_before);
     assert_eq!(eng.get_cell(hx, "H(3,2)").unwrap().value, hex_roll_before);
+    assert_eq!(
+        eng.get_cell(tri, "T(2,0)").unwrap().value,
+        CellValue::Number(4.0)
+    );
+    assert_eq!(
+        eng.get_cell(vor, "V(2)").unwrap().value,
+        CellValue::Number(42.0)
+    );
+}
+
+#[test]
+fn import_csv_and_xlsx_from_path_and_leading_space_formula() {
+    let dir = std::env::temp_dir();
+    let pid = std::process::id();
+    let csv_path = dir.join(format!("carbide_s16_{pid}.csv"));
+    let xlsx_path = dir.join(format!("carbide_s16_{pid}.xlsx"));
+
+    std::fs::write(&csv_path, b"10, =A1*2\n").unwrap();
+    let mut eng = WorkbookEngine::new();
+    let order = eng.import_csv(&csv_path).unwrap();
+    assert_eq!(order.len(), 1);
+    assert_eq!(
+        eng.get_cell(order[0], "B1").unwrap().value,
+        CellValue::Number(20.0)
+    );
+    let _ = std::fs::remove_file(&csv_path);
+
+    let s1 = r#"<row r="1"><c r="A1"><v>6</v></c><c r="B1"><f>A1*7</f></c></row>"#;
+    std::fs::write(&xlsx_path, minimal_xlsx(&[("DiskSheet", s1)])).unwrap();
+    let order = eng.import_xlsx(&xlsx_path).unwrap();
+    assert_eq!(order.len(), 1);
+    assert_eq!(eng.workbook.sheets[&order[0]].name, "DiskSheet");
+    assert_eq!(
+        eng.get_cell(order[0], "B1").unwrap().value,
+        CellValue::Number(42.0)
+    );
+    let _ = std::fs::remove_file(&xlsx_path);
 }
 
 #[cfg(feature = "native")]
