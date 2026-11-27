@@ -6,8 +6,12 @@
 //! preserving `=`-prefixed formulas so `WorkbookEngine` can build the DAG and
 //! evaluate them immediately.
 
+use std::io::Cursor;
+
+use calamine::{CellErrorType, Data, Reader};
 use carbide_core::{
-    Cell, CellValue, EngineKind, Sheet, SheetExtent, SheetId, Workbook, WorkbookId, WorkbookMeta,
+    Cell, CellError, CellValue, EngineKind, Sheet, SheetExtent, SheetId, Workbook, WorkbookId,
+    WorkbookMeta,
 };
 use carbide_tess::square::{SquareCoord, SquareLattice};
 use carbide_tess::{Lattice, LatticeKind};
@@ -175,6 +179,208 @@ pub fn import_csv_bytes(bytes: &[u8], sheet_name: &str) -> Result<Workbook, Stor
     })
 }
 
+/// Map an Excel [`CellErrorType`] to Carbide's [`CellError`]. Standard
+/// errors map directly; Excel-specific error codes (`#N/A`, `#NAME?`,
+/// `#NULL!`, `#DATA!`) are preserved verbatim inside `CellError::Lang`.
+fn map_excel_error(err: &CellErrorType) -> CellError {
+    match err {
+        CellErrorType::Div0 => CellError::DivZero,
+        CellErrorType::Ref => CellError::Ref,
+        CellErrorType::Num => CellError::Num,
+        CellErrorType::Value => CellError::Value,
+        CellErrorType::NA
+        | CellErrorType::Name
+        | CellErrorType::Null
+        | CellErrorType::GettingData => CellError::Lang(err.to_string()),
+    }
+}
+
+/// Convert a calamine [`Data`] value into a Carbide [`Cell`]. Returns `None`
+/// for empty cells so imported sheets stay sparse.
+fn cell_from_excel_data(data: &Data) -> Option<Cell> {
+    match data {
+        Data::Empty => None,
+        Data::Int(i) => Some(Cell {
+            source: Some(i.to_string()),
+            engine: None,
+            value: CellValue::Integer(*i),
+        }),
+        Data::Float(f) => {
+            if f.is_finite() {
+                Some(Cell {
+                    source: Some(f.to_string()),
+                    engine: None,
+                    value: CellValue::Number(*f),
+                })
+            } else {
+                Some(Cell {
+                    source: None,
+                    engine: None,
+                    value: CellValue::Error(CellError::Num),
+                })
+            }
+        }
+        Data::Bool(b) => Some(Cell {
+            source: Some(if *b { "TRUE" } else { "FALSE" }.to_string()),
+            engine: None,
+            value: CellValue::Bool(*b),
+        }),
+        Data::String(s) => {
+            if s.is_empty() {
+                return None;
+            }
+            // Literal Excel text starting with `=` (no `<f>` element) must
+            // NOT carry `source: Some("=...")`, or `WorkbookEngine::rebuild_dag`
+            // would misparse it as a live formula.
+            let source = if s.trim_start().starts_with('=') {
+                None
+            } else {
+                Some(s.clone())
+            };
+            Some(Cell {
+                source,
+                engine: None,
+                value: CellValue::Text(s.clone()),
+            })
+        }
+        Data::DateTime(dt) => {
+            let serial = dt.as_f64();
+            if serial.is_finite() {
+                Some(Cell {
+                    source: Some(serial.to_string()),
+                    engine: None,
+                    value: CellValue::Number(serial),
+                })
+            } else {
+                Some(Cell {
+                    source: None,
+                    engine: None,
+                    value: CellValue::Error(CellError::Num),
+                })
+            }
+        }
+        Data::DateTimeIso(s) | Data::DurationIso(s) => {
+            if s.is_empty() {
+                return None;
+            }
+            let source = if s.trim_start().starts_with('=') {
+                None
+            } else {
+                Some(s.clone())
+            };
+            Some(Cell {
+                source,
+                engine: None,
+                value: CellValue::Text(s.clone()),
+            })
+        }
+        Data::Error(e) => Some(Cell {
+            source: None,
+            engine: None,
+            value: CellValue::Error(map_excel_error(e)),
+        }),
+    }
+}
+
+/// Parse `.xlsx` workbook bytes via `calamine` into a multi-sheet
+/// `LatticeKind::Square` [`Workbook`].
+///
+/// - Preserves all worksheets in workbook order.
+/// - Merges `worksheet_range` and `worksheet_formula` independently using each
+///   `Range`'s own `start()` origin so non-A1 sheets and formula-only cells
+///   (without cached `<v>` elements) land at exact A1 coordinates.
+/// - Prefixes non-empty formula strings with `=` while keeping any cached
+///   value as the initial [`CellValue`] until `WorkbookEngine` evaluates them.
+pub fn import_xlsx_bytes(bytes: &[u8]) -> Result<Workbook, StoreError> {
+    let mut xlsx: calamine::Xlsx<_> = calamine::open_workbook_from_rs(Cursor::new(bytes))?;
+    let sheet_names = xlsx.sheet_names();
+    if sheet_names.is_empty() {
+        return Err(StoreError::Format(
+            "xlsx workbook contains no worksheets".into(),
+        ));
+    }
+
+    let lattice = SquareLattice::default();
+    let mut sheets = HashMap::new();
+    let mut sheet_order = Vec::with_capacity(sheet_names.len());
+    let title = sheet_names[0].clone();
+
+    for (idx, name) in sheet_names.into_iter().enumerate() {
+        let mut cells: HashMap<String, Cell> = HashMap::new();
+
+        let val_range = xlsx.worksheet_range(&name)?;
+        if let Some((start_r, start_c)) = val_range.start() {
+            for (rel_r, rel_c, data) in val_range.used_cells() {
+                let Some(cell) = cell_from_excel_data(data) else {
+                    continue;
+                };
+                let row = i32::try_from(start_r + rel_r as u32)
+                    .map_err(|_| StoreError::Format("xlsx exceeds maximum row index".into()))?;
+                let col = i32::try_from(start_c + rel_c as u32)
+                    .map_err(|_| StoreError::Format("xlsx exceeds maximum column index".into()))?;
+                let addr = lattice.address(SquareCoord { col, row });
+                cells.insert(addr, cell);
+            }
+        }
+
+        let fml_range = xlsx.worksheet_formula(&name)?;
+        if let Some((start_r, start_c)) = fml_range.start() {
+            for (rel_r, rel_c, raw_formula) in fml_range.used_cells() {
+                let trimmed = raw_formula.trim();
+                if trimmed.is_empty() {
+                    continue;
+                }
+                let formula_src = if trimmed.starts_with('=') {
+                    trimmed.to_string()
+                } else {
+                    format!("={trimmed}")
+                };
+                let row = i32::try_from(start_r + rel_r as u32)
+                    .map_err(|_| StoreError::Format("xlsx exceeds maximum row index".into()))?;
+                let col = i32::try_from(start_c + rel_c as u32)
+                    .map_err(|_| StoreError::Format("xlsx exceeds maximum column index".into()))?;
+                let addr = lattice.address(SquareCoord { col, row });
+                cells
+                    .entry(addr)
+                    .and_modify(|cell| {
+                        cell.source = Some(formula_src.clone());
+                    })
+                    .or_insert(Cell {
+                        source: Some(formula_src),
+                        engine: None,
+                        value: CellValue::Empty,
+                    });
+            }
+        }
+
+        let sid = SheetId((idx + 1) as u32);
+        sheet_order.push(sid);
+        sheets.insert(
+            sid,
+            Sheet {
+                id: sid,
+                name,
+                lattice: LatticeKind::Square,
+                extent: SheetExtent::Unbounded,
+                lattice_config: None,
+                cells,
+            },
+        );
+    }
+
+    Ok(Workbook {
+        id: WorkbookId(1),
+        meta: WorkbookMeta {
+            title,
+            created_at: String::new(),
+            format_version: FORMAT_VERSION,
+        },
+        default_engine: EngineKind::ExcelLite,
+        sheet_order,
+        sheets,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -264,5 +470,217 @@ mod tests {
         let bad = b"ok,bad\n1,\xFF\xFE\n";
         let err = import_csv_bytes(bad, "Bad").unwrap_err();
         assert!(matches!(err, StoreError::Csv(_)));
+    }
+
+    /// Synthesize a valid minimal OOXML `.xlsx` archive in memory so tests
+    /// exercise `calamine::Xlsx` without checking in binary fixtures.
+    fn build_test_xlsx(sheets: &[(&str, &str)]) -> Vec<u8> {
+        use std::io::Write;
+        let mut buf = Vec::new();
+        let mut zip = zip::ZipWriter::new(Cursor::new(&mut buf));
+        let opts = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Deflated);
+
+        let mut overrides = String::new();
+        let mut wb_sheets = String::new();
+        let mut wb_rels = String::new();
+        for (i, (name, _)) in sheets.iter().enumerate() {
+            let idx = i + 1;
+            overrides.push_str(&format!(
+                r#"<Override PartName="/xl/worksheets/sheet{idx}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>"#
+            ));
+            wb_sheets.push_str(&format!(
+                r#"<sheet name="{name}" sheetId="{idx}" r:id="rId{idx}"/>"#
+            ));
+            wb_rels.push_str(&format!(
+                r#"<Relationship Id="rId{idx}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet{idx}.xml"/>"#
+            ));
+        }
+        let style_rid = sheets.len() + 1;
+        wb_rels.push_str(&format!(
+            r#"<Relationship Id="rId{style_rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>"#
+        ));
+
+        zip.start_file("[Content_Types].xml", opts).unwrap();
+        write!(
+            zip,
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+  {overrides}
+</Types>"#
+        )
+        .unwrap();
+
+        zip.start_file("_rels/.rels", opts).unwrap();
+        write!(
+            zip,
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>"#
+        )
+        .unwrap();
+
+        zip.start_file("xl/workbook.xml", opts).unwrap();
+        write!(
+            zip,
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+          xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>{wb_sheets}</sheets>
+</workbook>"#
+        )
+        .unwrap();
+
+        zip.start_file("xl/_rels/workbook.xml.rels", opts).unwrap();
+        write!(
+            zip,
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  {wb_rels}
+</Relationships>"#
+        )
+        .unwrap();
+
+        // Style index 0 = general, style index 1 = built-in date format (numFmtId=14).
+        zip.start_file("xl/styles.xml", opts).unwrap();
+        write!(
+            zip,
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <cellXfs count="2">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+    <xf numFmtId="14" fontId="0" fillId="0" borderId="0" applyNumberFormat="1"/>
+  </cellXfs>
+</styleSheet>"#
+        )
+        .unwrap();
+
+        for (i, (_, sheet_data)) in sheets.iter().enumerate() {
+            let idx = i + 1;
+            zip.start_file(format!("xl/worksheets/sheet{idx}.xml"), opts)
+                .unwrap();
+            write!(
+                zip,
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>{sheet_data}</sheetData>
+</worksheet>"#
+            )
+            .unwrap();
+        }
+
+        zip.finish().unwrap();
+        buf
+    }
+
+    #[test]
+    fn import_xlsx_bytes_handles_multisheet_offsets_formulas_dates_and_errors() {
+        let sheet1 = r#"
+<row r="2">
+  <c r="B2"><v>10</v></c>
+  <c r="C2"><v>2.5</v></c>
+  <c r="D2" t="b"><v>1</v></c>
+  <c r="E2" t="inlineStr"><is><t>Hello</t></is></c>
+  <c r="F2" t="inlineStr"><is><t>=literal_text</t></is></c>
+</row>
+<row r="3">
+  <c r="B3"><f>SUM(B2:C2)</f><v>12.5</v></c>
+  <c r="C3"><f>B2*3</f></c>
+  <c r="D3" s="1"><v>45000</v></c>
+  <c r="E3" t="d"><v>2026-11-27</v></c>
+  <c r="F3" t="e"><v>#DIV/0!</v></c>
+</row>"#;
+        let sheet2 = ""; // Empty sheet (`Range::start() == None`)
+        let sheet3 = r#"<row r="1"><c r="A1"><v>99</v></c></row>"#;
+
+        let bytes = build_test_xlsx(&[
+            ("Sales", sheet1),
+            ("EmptySheet", sheet2),
+            ("Summary", sheet3),
+        ]);
+        let wb = import_xlsx_bytes(&bytes).unwrap();
+        assert_eq!(wb.sheet_order.len(), 3);
+
+        let s1 = &wb.sheets[&wb.sheet_order[0]];
+        assert_eq!(s1.name, "Sales");
+        assert_eq!(s1.lattice, LatticeKind::Square);
+        // Non-A1 offset preserved: row 2 col B -> B2.
+        assert!(!s1.cells.contains_key("A1"));
+        assert_eq!(s1.cells["B2"].value, CellValue::Number(10.0));
+        assert_eq!(s1.cells["C2"].value, CellValue::Number(2.5));
+        assert_eq!(s1.cells["D2"].value, CellValue::Bool(true));
+        assert_eq!(s1.cells["E2"].value, CellValue::Text("Hello".into()));
+        // Literal string starting with '=' must NOT set source="=..."
+        assert_eq!(
+            s1.cells["F2"].value,
+            CellValue::Text("=literal_text".into())
+        );
+        assert_eq!(s1.cells["F2"].source, None);
+        // Formula with cached value preserves both.
+        assert_eq!(s1.cells["B3"].source.as_deref(), Some("=SUM(B2:C2)"));
+        assert_eq!(s1.cells["B3"].value, CellValue::Number(12.5));
+        // Formula-only cell (no `<v>`) is merged independently from worksheet_formula.
+        assert_eq!(s1.cells["C3"].source.as_deref(), Some("=B2*3"));
+        assert_eq!(s1.cells["C3"].value, CellValue::Empty);
+        // DateTime (serial) & DateTimeIso.
+        assert_eq!(s1.cells["D3"].value, CellValue::Number(45000.0));
+        assert_eq!(s1.cells["E3"].value, CellValue::Text("2026-11-27".into()));
+        // Excel error cell.
+        assert_eq!(s1.cells["F3"].value, CellValue::Error(CellError::DivZero));
+
+        // Empty sheet succeeds with 0 cells.
+        let s2 = &wb.sheets[&wb.sheet_order[1]];
+        assert_eq!(s2.name, "EmptySheet");
+        assert!(s2.cells.is_empty());
+
+        // Third sheet preserved in order.
+        let s3 = &wb.sheets[&wb.sheet_order[2]];
+        assert_eq!(s3.name, "Summary");
+        assert_eq!(s3.cells["A1"].value, CellValue::Number(99.0));
+    }
+
+    #[test]
+    fn excel_error_and_non_finite_float_mapping_covers_all_variants() {
+        assert_eq!(map_excel_error(&CellErrorType::Div0), CellError::DivZero);
+        assert_eq!(map_excel_error(&CellErrorType::Ref), CellError::Ref);
+        assert_eq!(map_excel_error(&CellErrorType::Num), CellError::Num);
+        assert_eq!(map_excel_error(&CellErrorType::Value), CellError::Value);
+        assert_eq!(
+            map_excel_error(&CellErrorType::NA),
+            CellError::Lang("#N/A".into())
+        );
+        assert_eq!(
+            map_excel_error(&CellErrorType::Name),
+            CellError::Lang("#NAME?".into())
+        );
+        assert_eq!(
+            map_excel_error(&CellErrorType::Null),
+            CellError::Lang("#NULL!".into())
+        );
+        assert_eq!(
+            map_excel_error(&CellErrorType::GettingData),
+            CellError::Lang("#DATA!".into())
+        );
+
+        let nan_cell = cell_from_excel_data(&Data::Float(f64::NAN)).unwrap();
+        assert_eq!(nan_cell.value, CellValue::Error(CellError::Num));
+        assert_eq!(nan_cell.source, None);
+        let inf_cell = cell_from_excel_data(&Data::Float(f64::INFINITY)).unwrap();
+        assert_eq!(inf_cell.value, CellValue::Error(CellError::Num));
+    }
+
+    #[test]
+    fn import_xlsx_bytes_rejects_corrupt_and_sheetless_inputs() {
+        assert!(import_xlsx_bytes(b"not a zip archive").is_err());
+        let empty_wb = build_test_xlsx(&[]);
+        assert!(matches!(
+            import_xlsx_bytes(&empty_wb),
+            Err(StoreError::Format(_))
+        ));
     }
 }

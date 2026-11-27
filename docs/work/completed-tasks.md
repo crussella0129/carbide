@@ -337,3 +337,11 @@
 - **Completed:** 2026-11-27T05:33:50Z
 - **Files modified:** Cargo.toml, Cargo.lock, crates/carbide-store/Cargo.toml, crates/carbide-store/src/lib.rs, crates/carbide-store/src/import.rs
 - **Commit:** `8605d8a8aa319dd413775338163928ee5053dbe6`
+
+
+## T-002 (sprint 16)
+- **Description:** Implement `carbide-store::import::import_xlsx_bytes` via `calamine 0.38` with independent `Range::start()` merging for values and formula-only cells, finite-float guard, literal `"=..."` string safety, `DateTime`/`DateTimeIso` support, full `CellErrorType` mapping, and pure-Rust synthesized multi-sheet `.xlsx` unit tests (16/16 `carbide-store` tests green, 0 warnings).
+- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
+- **Completed:** 2026-11-27T05:35:35Z
+- **Files modified:** crates/carbide-store/src/import.rs
+- **Commit:** PENDING

@@ -1,11 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-### T-002 (sprint 16): Implement `carbide-store::import::import_xlsx_bytes` via `calamine`
-- **Status:** pending
-- **Sprint:** 16
-- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
-- **Build plan:** [s16 build-plan.md](../sprints/s16/sprint-plans/build-plan.md#t-002-implement-carbide-storeimportimport_xlsx_bytes-via-calamine)
-
 ### T-003 (sprint 16): Wire `WorkbookEngine` import, formula evaluation, and `replace_sheet_cells`
 - **Status:** pending
 - **Sprint:** 16
