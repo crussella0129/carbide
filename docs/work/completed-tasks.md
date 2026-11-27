@@ -354,3 +354,11 @@
 - **Completed:** 2026-11-27T05:41:00Z
 - **Files modified:** crates/carbide-formula/src/engine.rs, crates/carbide-formula/tests/persistence.rs
 - **Commit:** `55984523e008da564efad46f0c92920275f052b1`
+
+
+## T-004 (sprint 16)
+- **Description:** Enable `File -> Open…` / `Save` and add `File -> Import CSV / Excel…` (`RibbonAction::Import`) in `apps/carbide-ui/src/ribbon.rs`, wire native + `wasm32` `.csv`/`.xlsx` picker and `drain_pending_import` (with `ctx.request_repaint()`, `mark_dirty()`, full stale square/transient state cleanup, sibling tab preservation, dynamic Square tab label, dismissible multi-sheet notice & non-fatal error banner, and headless unit tests) in `apps/carbide-ui/src/app/{mod,demos,commands,io}.rs` (318/318 native UI tests green, `wasm32-unknown-unknown` clippy `-D warnings` & build clean, max 819 lines, zero `allow`s).
+- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
+- **Completed:** 2026-11-27T05:46:40Z
+- **Files modified:** apps/carbide-ui/Cargo.lock, apps/carbide-ui/src/ribbon.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/io.rs
+- **Commit:** PENDING
