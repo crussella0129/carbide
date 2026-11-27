@@ -1,0 +1,6 @@
+## Concerns
+1. `C-006` [minor] — `build-plan.md:24` specifies non-existent `CellError::NA` and `CellError::Name` variants: `crates/carbide-core/src/cell.rs:17-41` defines `CellError::{Ref, Cycle, DivZero, Num, Value, Lang(String), Compile(String), Timeout, Spill, StaleFunction}` with no `NA` or `Name` variants. **Fix:** Map `CellErrorType::{NA, Name, Null, GettingData}` to `CellError::Lang(e.to_string())` (preserving `"#N/A"`, `"#NAME?"`, `"#NULL!"`, `"#DATA!"`) and update `build-plan.md:24` accordingly.
+2. `C-007` [minor] — `docs/work/tasks.md:7` still points to the old `T-001` heading anchor after the MSRV title update: `build-plan.md:33` is now `### T-001: Add \`carbide-store::import\` CSV parser, format detection & MSRV 1.89 alignment`, while `docs/work/tasks.md:3,7` retains the pre-revision title and anchor `#t-001-add-carbide-storeimport-csv-parser-and-format-detection`. **Fix:** Sync the `T-001` heading and anchor in `docs/work/tasks.md:3,7` to match `build-plan.md:33` (`#t-001-add-carbide-storeimport-csv-parser-format-detection--msrv-189-alignment`).
+
+## Confidence: proceed-with-caveats
+All prior blocker and major concerns (`C-001`–`C-005`) are cleanly resolved across `INT-0006`, `build-plan.md`, and `test-plan.md`, leaving only two minor documentation/mapping fixes (`C-006`, `C-007`) that do not block starting implementation.
