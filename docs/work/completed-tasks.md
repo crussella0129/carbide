@@ -329,3 +329,11 @@
 - **Completed:** 2026-11-27T01:40:40Z
 - **Files modified:** Cargo.toml, apps/carbide-ui/Cargo.toml, .github/dependabot.yml
 - **Commit:** `be8b12d6a629da384768cfc60d6851b781435c85`
+
+
+## T-001 (sprint 16)
+- **Description:** Add `csv 1.4`, `calamine 0.38`, and `carbide-tess` to `carbide-store`, align root `[workspace.package].rust-version` to `"1.89"` (`zip 9.8.2`), add `StoreError::{Csv, Xlsx}`, and implement `carbide-store::import::{ImportFormat, detect_import_format, sheet_name_from_filename, import_csv_bytes}` with full unit test coverage (13/13 `carbide-store` tests green, 0 warnings).
+- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
+- **Completed:** 2026-11-27T05:33:50Z
+- **Files modified:** Cargo.toml, Cargo.lock, crates/carbide-store/Cargo.toml, crates/carbide-store/src/lib.rs, crates/carbide-store/src/import.rs
+- **Commit:** PENDING

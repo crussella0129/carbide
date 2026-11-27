@@ -1,11 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-### T-001 (sprint 16): Add `carbide-store::import` CSV parser, format detection & MSRV 1.89 alignment
-- **Status:** pending
-- **Sprint:** 16
-- **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
-- **Build plan:** [s16 build-plan.md](../sprints/s16/sprint-plans/build-plan.md#t-001-add-carbide-storeimport-csv-parser-format-detection--msrv-189-alignment)
-
 ### T-002 (sprint 16): Implement `carbide-store::import::import_xlsx_bytes` via `calamine`
 - **Status:** pending
 - **Sprint:** 16
