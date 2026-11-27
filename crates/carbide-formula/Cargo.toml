@@ -27,8 +27,8 @@ carbide-core = { workspace = true }
 carbide-tess = { workspace = true }
 carbide-store = { workspace = true }
 hashbrown = { workspace = true }
-libloading = { version = "0.8", optional = true }
-pyo3 = { version = "0.23", features = ["auto-initialize"], optional = true }
+libloading = { version = "0.9", optional = true }
+pyo3 = { version = "0.30", features = ["auto-initialize"], optional = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

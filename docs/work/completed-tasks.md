@@ -305,3 +305,11 @@
 - **Completed:** 2026-11-27T01:26:05Z
 - **Files modified:** Cargo.toml, Cargo.lock, apps/carbide-ui/Cargo.lock
 - **Commit:** `23a3ee58d9784b27ec75805f054d8e6efcbbb65e`
+
+
+## T-002 (sprint 15)
+- **Description:** Upgrade `pyo3` (`0.23` → `0.30.1`, migrating `Python::with_gil` → `Python::attach`) and `libloading` (`0.8` → `0.9.1`) in `carbide-formula`, verified green with zero warnings across `--features python` (Python 3.13.11), `--features native`, and default workspace suites.
+- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
+- **Completed:** 2026-11-27T01:28:30Z
+- **Files modified:** crates/carbide-formula/Cargo.toml, crates/carbide-formula/src/python/mod.rs, Cargo.lock
+- **Commit:** PENDING

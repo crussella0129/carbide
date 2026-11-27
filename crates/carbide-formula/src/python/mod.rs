@@ -36,7 +36,7 @@ fn pyerr(e: PyErr) -> PyEvalError {
 pub fn eval_python_expr(src: &str) -> Result<CellValue, PyEvalError> {
     let code = CString::new(src)
         .map_err(|_| PyEvalError::Py("source contains an interior NUL byte".into()))?;
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let obj = py.eval(code.as_c_str(), None, None).map_err(pyerr)?;
         py_to_cell_value(&obj)
     })
@@ -50,11 +50,11 @@ pub fn eval_python_with_ctx(src: &str, ctx: &dyn EvalCtx) -> Result<CellValue, P
         .map_err(|_| PyEvalError::Py("source contains an interior NUL byte".into()))?;
     // SAFETY: the `'static` lifetime is a lie scoped to this call. The
     // `PyCtx` is poisoned (`set(None)`) before this function returns and
-    // never escapes `with_gil`, so the borrowed `ctx` is always alive for
+    // never escapes `attach`, so the borrowed `ctx` is always alive for
     // every `PyCtx` method call. `PyCtx` is `unsendable`, pinning it to
     // this thread.
     let ctx_static: &'static dyn EvalCtx = unsafe { std::mem::transmute(ctx) };
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let pyctx = Bound::new(
             py,
             PyCtx {
