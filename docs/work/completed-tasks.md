@@ -344,4 +344,4 @@
 - **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
 - **Completed:** 2026-11-27T05:35:35Z
 - **Files modified:** crates/carbide-store/src/import.rs
-- **Commit:** PENDING
+- **Commit:** `f2abe8baf1de42b8ac540299e4ffc61aad3fcee4`
