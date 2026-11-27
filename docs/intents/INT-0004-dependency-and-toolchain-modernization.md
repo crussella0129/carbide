@@ -2,8 +2,8 @@
 
 <!-- sprint-loop-intent-v2 -->
 - **Intent ID:** INT-0004
-- **State:** proposed
-- **Work evidence:** none
+- **State:** planned
+- **Work evidence:** [Sprint 15 build-plan.md](../sprints/s15/sprint-plans/build-plan.md) (`T-001`–`T-004`)
 - **Completion evidence:** none
 - **Code evidence:** none
 - **Test evidence:** none
@@ -28,3 +28,4 @@ Audit and modernize Carbide's 6-month-old dependency graph and automation config
 
 ## Transition history
 - 2026-11-26: created as `proposed` during Sprint 12 6-month project assessment.
+- 2026-11-26: `proposed` → `planned` (Sprint 15 Plan Phase: `T-001`–`T-004` in `docs/sprints/s15/sprint-plans/build-plan.md`).
