@@ -1,9 +1,22 @@
 # Dependabot opens scheduled version-update PRs against the work branch.
-# Merge only at sprint boundaries when green; add ecosystems as the project grows.
+# Merge only at sprint boundaries when green; covers GitHub Actions plus
+# both Cargo workspaces (`/` engine workspace and `/apps/carbide-ui`).
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "dev"
+
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "dev"
+
+  - package-ecosystem: "cargo"
+    directory: "/apps/carbide-ui"
     schedule:
       interval: "weekly"
     target-branch: "dev"

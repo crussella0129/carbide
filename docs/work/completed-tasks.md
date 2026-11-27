@@ -321,3 +321,11 @@
 - **Completed:** 2026-11-27T01:39:45Z
 - **Files modified:** apps/carbide-ui/Cargo.toml, apps/carbide-ui/Cargo.lock, apps/carbide-ui/src/ribbon.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_triangle.rs, apps/carbide-ui/src/app/render_voronoi.rs, docs/history/decisions-legacy.md
 - **Commit:** `34e523b26b905a51bc099816685d530fa5a53d4f`
+
+
+## T-004 (sprint 15)
+- **Description:** Align `[workspace.package].rust-version` (`1.88`, driven by `libloading 0.9.1`) in `Cargo.toml` and `[package].rust-version` (`1.95`, driven by `egui`/`eframe 0.37.0`) in `apps/carbide-ui/Cargo.toml` against target-filtered `cargo metadata`, and expand `.github/dependabot.yml` to cover `github-actions` (`/`) plus both Cargo manifests (`/` and `/apps/carbide-ui`) targeting `dev` weekly.
+- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
+- **Completed:** 2026-11-27T01:40:40Z
+- **Files modified:** Cargo.toml, apps/carbide-ui/Cargo.toml, .github/dependabot.yml
+- **Commit:** PENDING
