@@ -20,7 +20,7 @@ carbide-store = { path = "../../crates/carbide-store" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 smallvec = { version = "1", features = ["serde"] }
-base64 = "0.22"
+base64 = "0.23"
 
 # rfd 0.18 handles wasm targets cleanly in its build script without requiring
 # any native Linux backend feature (superseding ADR-003's rfd 0.14 `gtk3`
