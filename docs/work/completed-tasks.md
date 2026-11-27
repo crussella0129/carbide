@@ -361,4 +361,4 @@
 - **Intent:** [INT-0006](../intents/INT-0006-csv-and-xlsx-import.md)
 - **Completed:** 2026-11-27T05:46:40Z
 - **Files modified:** apps/carbide-ui/Cargo.lock, apps/carbide-ui/src/ribbon.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/demos.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/io.rs
-- **Commit:** PENDING
+- **Commit:** `f90cfdd6b5dfa0479f7758513a3186478411beac`
