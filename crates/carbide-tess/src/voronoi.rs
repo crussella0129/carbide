@@ -106,7 +106,7 @@ impl VoronoiLattice {
                 })
                 .collect();
             let tri = delaunator::triangulate(&points);
-            for t in tri.triangles.chunks_exact(3) {
+            for t in tri.triangles.as_chunks::<3>().0 {
                 let (a, b, c) = (t[0] as u32, t[1] as u32, t[2] as u32);
                 for (u, v) in [(a, b), (b, c), (c, a)] {
                     adj[u as usize].insert(v);

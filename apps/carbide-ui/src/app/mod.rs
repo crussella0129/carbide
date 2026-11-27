@@ -288,7 +288,8 @@ pub struct CarbideApp {
 }
 
 impl eframe::App for CarbideApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let ctx = ui.ctx().clone();
         // Drain any bytes left by an async Open dialog BEFORE handling
         // this frame's input — the restored state then drives the rest
         // of the update.
@@ -299,7 +300,7 @@ impl eframe::App for CarbideApp {
             egui::Visuals::light()
         });
         self.frame_time = ctx.input(|i| i.time);
-        for command in self.collect_commands(ctx) {
+        for command in self.collect_commands(&ctx) {
             // Every dispatched command is a potential mutation; the
             // central mark_dirty here means we don't have to thread
             // mark_dirty through each command's body. Save/Open/Find/
@@ -307,7 +308,7 @@ impl eframe::App for CarbideApp {
             // makes that a wash — at worst a redundant write 2s later.
             // Save and Open clear the bit themselves on success.
             self.mark_dirty();
-            self.apply(command, ctx);
+            self.apply(command, &ctx);
         }
 
         // Menu bar above the ribbon — File / Edit / Format / Data /
@@ -318,17 +319,17 @@ impl eframe::App for CarbideApp {
         // ribbon, formula bar, sheet tabs — so a sheet reads as an
         // app rather than a spreadsheet.
         if !self.stage_mode {
-            egui::TopBottomPanel::top("carbide_menu_bar").show(ctx, |ui| {
+            egui::Panel::top("carbide_menu_bar").show(ui, |ui| {
                 let can_undo = self.history.can_undo();
                 let can_redo = self.history.can_redo();
                 if let Some(action) = ribbon::menu_bar(ui, can_undo, can_redo) {
-                    self.apply_ribbon(action, ctx);
+                    self.apply_ribbon(action, &ctx);
                 }
             });
         }
 
         if !self.stage_mode {
-            egui::TopBottomPanel::top("carbide_ribbon").show(ctx, |ui| match self.active {
+            egui::Panel::top("carbide_ribbon").show(ui, |ui| match self.active {
                 ActiveSheet::Square => {
                     let current = self.square.formats.get(self.square.selection.cursor);
                     let can_undo = self.history.can_undo();
@@ -342,7 +343,7 @@ impl eframe::App for CarbideApp {
                         false, // voronoi_active
                         false, // voronoi_frozen
                     ) {
-                        self.apply_ribbon(action, ctx);
+                        self.apply_ribbon(action, &ctx);
                     }
                 }
                 ActiveSheet::Hex => {
@@ -372,7 +373,7 @@ impl eframe::App for CarbideApp {
                         false, // voronoi_active
                         false, // voronoi_frozen
                     ) {
-                        self.apply_ribbon(action, ctx);
+                        self.apply_ribbon(action, &ctx);
                     }
                 }
                 ActiveSheet::Triangle => {
@@ -388,7 +389,7 @@ impl eframe::App for CarbideApp {
                         false, // voronoi_active
                         false, // voronoi_frozen
                     ) {
-                        self.apply_ribbon(action, ctx);
+                        self.apply_ribbon(action, &ctx);
                     }
                 }
                 ActiveSheet::Voronoi => {
@@ -406,17 +407,17 @@ impl eframe::App for CarbideApp {
                         true,
                         frozen,
                     ) {
-                        self.apply_ribbon(action, ctx);
+                        self.apply_ribbon(action, &ctx);
                     }
                 }
             });
         }
 
         if !self.stage_mode {
-            egui::TopBottomPanel::top("carbide_formula_bar")
+            egui::Panel::top("carbide_formula_bar")
                 .resizable(true)
-                .min_height(28.0)
-                .show(ctx, |ui| {
+                .min_size(28.0)
+                .show(ui, |ui| {
                     ui.horizontal(|ui| {
                         let (addr, source) = self.active_address_and_source();
                         match self.active {
@@ -556,7 +557,7 @@ impl eframe::App for CarbideApp {
         }
 
         if !self.stage_mode {
-            egui::TopBottomPanel::bottom("carbide_sheet_tabs").show(ctx, |ui| {
+            egui::Panel::bottom("carbide_sheet_tabs").show(ui, |ui| {
                 ui.horizontal(|ui| {
                     if ui
                         .selectable_label(self.active == ActiveSheet::Square, "Budget")
@@ -628,10 +629,10 @@ impl eframe::App for CarbideApp {
         // user always has a visible way out (Esc also exits — see
         // the `ClearMarquee` handler).
         if self.stage_mode {
-            let exit_area = egui::Area::new("carbide_stage_exit".into())
+            let exit_area = egui::Area::new(egui::Id::unique("carbide_stage_exit"))
                 .anchor(egui::Align2::RIGHT_TOP, egui::vec2(-12.0, 12.0))
                 .interactable(true);
-            exit_area.show(ctx, |ui| {
+            exit_area.show(&ctx, |ui| {
                 if ui
                     .add(egui::Button::new("Exit Stage Mode").min_size(egui::vec2(130.0, 28.0)))
                     .clicked()
@@ -641,7 +642,7 @@ impl eframe::App for CarbideApp {
             });
         }
 
-        egui::CentralPanel::default().show(ctx, |ui| match self.active {
+        egui::CentralPanel::default().show(ui, |ui| match self.active {
             ActiveSheet::Square => {
                 egui::ScrollArea::both()
                     .auto_shrink([false, false])
@@ -652,11 +653,11 @@ impl eframe::App for CarbideApp {
             ActiveSheet::Voronoi => self.draw_voronoi_grid(ui),
         });
 
-        self.conditional_window(ctx);
-        self.find_window(ctx);
-        self.help_window(ctx);
-        self.about_window(ctx);
-        self.note_window(ctx);
+        self.conditional_window(&ctx);
+        self.find_window(&ctx);
+        self.help_window(&ctx);
+        self.about_window(&ctx);
+        self.note_window(&ctx);
 
         // End of frame — try a debounced autosave. The debounce in
         // `maybe_autosave` means a flurry of edits still results in at

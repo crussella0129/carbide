@@ -410,13 +410,13 @@ fn errors() {
 fn nesting_limit() {
     // A formula nested within the limit parses and evaluates.
     let ok: String = std::iter::once("1")
-        .chain(std::iter::repeat("+1").take(40))
+        .chain(std::iter::repeat_n("+1", 40))
         .collect();
     assert_eq!(num(&ok), 41.0);
 
     // A formula nested far past the 128-level limit is a parse error.
     let deep: String = std::iter::once("1")
-        .chain(std::iter::repeat("+1").take(5000))
+        .chain(std::iter::repeat_n("+1", 5000))
         .collect();
     assert!(
         eval_src(&deep).is_err(),

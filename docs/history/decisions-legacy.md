@@ -43,7 +43,7 @@ gated `#[allow(dead_code)]` until sprint 1 calls them.
 
 ## ADR-003 — `rfd` carries `gtk3` feature on wasm32 (sprint 1)
 **Date:** 2026-05-20
-**Status:** Adopted, shipped in v145 (PR #176).
+**Status:** Superseded in Sprint 15 (`INT-0004`) by `rfd 0.18`, whose build script handles `wasm` targets natively without requiring `gtk3` or `xdg-portal` (`rfd = { version = "0.18", default-features = false }`). Originally adopted and shipped in v145 (PR #176).
 
 `rfd 0.14`'s build script unconditionally panics if neither `gtk3` nor
 `xdg-portal` is enabled, even when targeting wasm32 where the

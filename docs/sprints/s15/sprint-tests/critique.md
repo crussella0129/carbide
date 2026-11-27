@@ -1,0 +1,5 @@
+## Concerns
+- **C-001 [minor] — `INT-0004` `Code evidence` omits commit `1532787` (the MSRV-1.88 Clippy cleanup commit verified by CI run `#45924350359`):** `docs/intents/INT-0004-dependency-and-toolchain-modernization.md:8` cites commits `23a3ee5`, `3f798c3`, `34e523b`, and `be8b12d`, but omits `1532787` (`chore(s15): satisfy MSRV 1.88 clippy lints` in `voronoi.rs`, `logical.rs`, and `reference_examples.rs`), which is the actual `headSha` (`15327876641b5942f63bbf593d051bfb25ab8640`) verified by GitHub CI run `#45924350359`. **Fix:** Append `` `1532787` `` to the commit list in `INT-0004`'s `Code evidence` line during Closeout.
+
+## Confidence: proceed-with-caveats
+All three `INT-0004` acceptance criteria and all five Plan Critic caveats (`C-001`–`C-005`) are independently verified with zero behavioral regressions across `egui`/`eframe 0.37`, `rfd 0.18`, `pyo3 0.30`, `libloading 0.9`, exact target-filtered MSRVs (`1.88`/`1.95`), valid Dependabot YAML, passing `check-book.sh`/`check-substrate.sh`, and 6/6 green CI jobs on run `#45924350359`, with only one minor commit-citation gap in `INT-0004`.

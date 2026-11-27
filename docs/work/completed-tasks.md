@@ -297,3 +297,35 @@
 - **Completed:** 2026-11-26T18:40:20Z
 - **Files modified:** apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/helpers.rs, apps/carbide-ui/src/app/io.rs
 - **Commit:** `abe5e580c0f7e1438892fccea31f5a90edf8a5d6`
+
+
+## T-001 (sprint 15)
+- **Description:** Upgrade root workspace `hashbrown` (`0.14` → `0.17`), `glam` (`0.27` → `0.34`), and `thiserror` (`1` → `2`), deduplicating `hashbrown` to a single `0.17.1` line in `Cargo.lock` with all 331 workspace + 315 UI tests passing and zero warnings.
+- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
+- **Completed:** 2026-11-27T01:26:05Z
+- **Files modified:** Cargo.toml, Cargo.lock, apps/carbide-ui/Cargo.lock
+- **Commit:** `23a3ee58d9784b27ec75805f054d8e6efcbbb65e`
+
+
+## T-002 (sprint 15)
+- **Description:** Upgrade `pyo3` (`0.23` → `0.30.1`, migrating `Python::with_gil` → `Python::attach`) and `libloading` (`0.8` → `0.9.1`) in `carbide-formula`, verified green with zero warnings across `--features python` (Python 3.13.11), `--features native`, and default workspace suites.
+- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
+- **Completed:** 2026-11-27T01:28:30Z
+- **Files modified:** crates/carbide-formula/Cargo.toml, crates/carbide-formula/src/python/mod.rs, Cargo.lock
+- **Commit:** `3f798c33dadddb8ba98ff27aab6b3a9252b87fa1`
+
+
+## T-003 (sprint 15)
+- **Description:** Upgrade `rfd` (`0.14` → `0.18`, dropping ADR-003's wasm32 `gtk3` workaround and updating stale comments + `decisions-legacy.md`) and `egui`/`eframe` (`0.29` → `0.37`, adopting upstream defaults and migrating `App::ui`, `egui::Panel`, `Tooltip::always_open`, `MenuBar`, `ui.close()`, `Margin::symmetric`, `StrokeKind`, and `TextEdit`), verified green with zero warnings across native clippy/tests (315/315), `wasm32-unknown-unknown` clippy `-D warnings` + build, max 819 lines, and zero `allow` attributes.
+- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
+- **Completed:** 2026-11-27T01:39:45Z
+- **Files modified:** apps/carbide-ui/Cargo.toml, apps/carbide-ui/Cargo.lock, apps/carbide-ui/src/ribbon.rs, apps/carbide-ui/src/app/commands.rs, apps/carbide-ui/src/app/mod.rs, apps/carbide-ui/src/app/render_hex.rs, apps/carbide-ui/src/app/render_square.rs, apps/carbide-ui/src/app/render_triangle.rs, apps/carbide-ui/src/app/render_voronoi.rs, docs/history/decisions-legacy.md
+- **Commit:** `34e523b26b905a51bc099816685d530fa5a53d4f`
+
+
+## T-004 (sprint 15)
+- **Description:** Align `[workspace.package].rust-version` (`1.88`, driven by `libloading 0.9.1`) in `Cargo.toml` and `[package].rust-version` (`1.95`, driven by `egui`/`eframe 0.37.0`) in `apps/carbide-ui/Cargo.toml` against target-filtered `cargo metadata`, and expand `.github/dependabot.yml` to cover `github-actions` (`/`) plus both Cargo manifests (`/` and `/apps/carbide-ui`) targeting `dev` weekly.
+- **Intent:** [INT-0004](../intents/INT-0004-dependency-and-toolchain-modernization.md)
+- **Completed:** 2026-11-27T01:40:40Z
+- **Files modified:** Cargo.toml, apps/carbide-ui/Cargo.toml, .github/dependabot.yml
+- **Commit:** `be8b12d6a629da384768cfc60d6851b781435c85`
